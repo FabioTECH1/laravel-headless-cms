@@ -8,7 +8,7 @@ import ToastContainer from '@/Components/ToastContainer.vue';
         <!-- Sidebar -->
         <aside class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
             <div class="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-700">
-                <span class="text-lg font-bold text-gray-900 dark:text-white">Headless CMS</span>
+                <span class="text-lg font-bold text-gray-900 dark:text-white">Laravel Headless CMS</span>
             </div>
 
             <nav class="flex-1 px-4 py-4 space-y-1">
