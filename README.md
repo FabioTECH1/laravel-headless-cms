@@ -40,7 +40,7 @@ This project provides a robust backend for managing dynamic content schemas and 
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/yourusername/laravel-headless-cms.git
+    git clone https://github.com/fabiotech1/laravel-headless-cms.git
     cd laravel-headless-cms
     ```
 
