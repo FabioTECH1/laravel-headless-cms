@@ -315,6 +315,47 @@ System tables defining content structure:
      - Assert: 403 Forbidden.
 
 
+## 12.6 Implement a data-driven Dashboard.
+
+**1. Controller Update (`Admin\DashboardController`):**
+   - **Note:** You might need to create this controller and update `routes/admin.php` to point `/admin/dashboard` to `DashboardController@index` instead of the closure.
+   - **Method `index`:**
+     - **System Stats:**
+       - `users_count`: `User::count()`.
+       - `types_count`: `ContentType::count()`.
+       - `media_count`: `MediaFile::count()`.
+       - `media_size`: `MediaFile::sum('size')` (Format this to MB/GB in the controller or frontend).
+     - **Content Breakdown:**
+       - Fetch all Content Types.
+       - Loop through them and perform a performant count query:
+         `$type->count = DB::table($type->slug)->count();`
+         (Handle the case where the table might not exist yet to be safe).
+     - Return `Inertia::render('Admin/Dashboard', ['stats' => ...])`.
+
+**2. Frontend Update (`Admin/Dashboard.vue`):**
+   - **Layout:** Use a CSS Grid (`grid-cols-1 md:grid-cols-3 gap-6`).
+   - **Widget 1 (Overview Cards):**
+     - Three cards (White bg, shadow, rounded).
+     - Icons (User, Database, Image).
+     - Data: "Users: 12", "Schemas: 5", "Media: 450MB".
+   - **Widget 2 (Content Volume):**
+     - A simple table or list.
+     - Columns: "Content Type", "Total Records", "Action".
+     - Action: Link to `/admin/content/{slug}`.
+   - **Widget 3 (Server Health - Optional):**
+     - Display the PHP Version (`phpversion()`) and Laravel Version (`app()->version()`) just for info.
+
+**3. Routes:**
+   - Ensure `routes/admin.php` uses the controller:
+     `Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');`
+
+**4. Testing (`tests/Feature/Admin/DashboardTest.php`):**
+   - **Test 1:** `admin can see dashboard stats`.
+     - Setup: Create 5 Users, 2 Content Types, 3 records in Type A.
+     - Action: GET `/admin/dashboard`.
+     - Assert: Response contains `stats.users_count` = 6 (5 + admin), `stats.content_breakdown` has correct counts.
+
+
 ## Phase 13: Production Deployment
 
 ### CI/CD (GitHub Actions)

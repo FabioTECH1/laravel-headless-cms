@@ -33,8 +33,6 @@ const form = useForm(
         }
 
         if (field.type === 'relation') {
-            // For relations, we store the ID in field_name_id
-            // If editing, the item likely comes with the ID field already.
             acc[field.name + '_id'] = props.item ? props.item[field.name + '_id'] : '';
             return acc;
         }
@@ -66,6 +64,7 @@ const submit = () => {
                     <h2 class="text-2xl font-bold mb-6">{{ isEditing ? 'Edit' : 'Create' }} {{ contentType.name }}</h2>
 
                     <form @submit.prevent="submit">
+                        <!-- Dynamic Fields -->
                         <div v-for="field in contentType.fields" :key="field.name" class="mb-6">
                             <!-- Text Input -->
                             <Input v-if="field.type === 'text'" :id="field.name" v-model="form[field.name]"
@@ -89,8 +88,8 @@ const submit = () => {
                             <div v-if="field.type === 'boolean'" class="flex items-center">
                                 <input :id="field.name" v-model="form[field.name]" type="checkbox"
                                     class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-                                <label :for="field.name" class="ml-2 block text-sm text-gray-900">
-                                    Enabled
+                                <label :for="field.name" class="ml-2 block text-sm text-gray-900 capitalize">
+                                    {{ field.name.replace(/_/g, ' ') }}
                                 </label>
                             </div>
 
@@ -113,17 +112,22 @@ const submit = () => {
                             </div>
                         </div>
 
+                        <!-- Publishing Section Header -->
+                        <div class="mt-10 mb-4">
+                            <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Publishing</h3>
+                        </div>
+
                         <!-- Published At (System Field) -->
-                        <div class="mb-6 border-t pt-4">
+                        <div class="mb-6">
                             <Input id="published_at" v-model="form.published_at" type="datetime-local"
                                 label="Published At" />
                             <p class="text-xs text-gray-500 mt-1">Leave empty to save as Draft.</p>
                         </div>
 
-                        <div class="flex justify-end pt-4 border-t border-gray-100">
+                        <div class="flex justify-end pt-4">
                             <button type="submit" :disabled="form.processing"
                                 class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                                {{ isEditing ? 'Update' : 'Save' }}
+                                {{ (isEditing ? 'Update' : 'Save') + (form.published_at ? ' & Publish' : '') }}
                             </button>
                         </div>
                     </form>
