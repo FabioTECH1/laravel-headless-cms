@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'contentTypes' => \App\Models\ContentType::select('id', 'name', 'slug')->get(),
         ];
     }
 }

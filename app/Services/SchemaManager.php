@@ -90,6 +90,7 @@ class SchemaManager
             'integer' => $table->integer($name),
             'boolean' => $table->boolean($name),
             'datetime' => $table->dateTime($name),
+            'relation' => $table->unsignedBigInteger($name.'_id')->nullable()->index(),
             default => throw new \InvalidArgumentException("Unsupported field type: {$type}"),
         };
     }

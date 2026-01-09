@@ -42,4 +42,25 @@ class DynamicEntity extends Model
 
         return $this;
     }
+
+    public function resolveRelations()
+    {
+        // Simple way to hydrate related models if they are loaded or foreign keys exist.
+        // For MVP, we might rely on naming convention if we want 'post->image' to work.
+        // But for now, let's just facilitate the creation and basic access.
+
+        // Dynamic Relationship Accessor (Magic Method) could go here.
+        return $this;
+    }
+
+    /**
+     * Map dynamic relationships.
+     */
+    public function __call($method, $parameters)
+    {
+        // Check if method matches a field name that is a relation/media type
+        // This requires knowing the current schema fields. But we only check slug on bind.
+
+        return parent::__call($method, $parameters);
+    }
 }

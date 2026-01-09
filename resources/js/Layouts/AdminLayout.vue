@@ -11,11 +11,9 @@ import { Link } from '@inertiajs/vue3';
             </div>
 
             <nav class="flex-1 px-4 py-4 space-y-1">
-                <Link
-                    href="/admin/dashboard"
+                <Link href="/admin/dashboard"
                     class="flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 group"
-                    :class="{ 'bg-gray-100 text-gray-900': $page.url === '/admin/dashboard' }"
-                >
+                    :class="{ 'bg-gray-100 text-gray-900': $page.url === '/admin/dashboard' }">
                     Dashboard
                 </Link>
 
@@ -24,7 +22,13 @@ import { Link } from '@inertiajs/vue3';
                         Content Types
                     </p>
                 </div>
-                <!-- Dynamic Content Types will go here -->
+                <div v-for="type in $page.props.contentTypes" :key="type.id">
+                    <Link :href="route('admin.content.index', type.slug)"
+                        class="flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 group"
+                        :class="{ 'bg-gray-100 text-gray-900': $page.url.startsWith(`/admin/content/${type.slug}`) }">
+                        {{ type.name }}
+                    </Link>
+                </div>
 
                 <div class="pt-4 pb-2">
                     <p class="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -32,19 +36,15 @@ import { Link } from '@inertiajs/vue3';
                     </p>
                 </div>
 
-                <Link
-                    href="/admin/schema"
+                <Link href="/admin/schema"
                     class="flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 group"
-                    :class="{ 'bg-gray-100 text-gray-900': $page.url.startsWith('/admin/schema') }"
-                >
+                    :class="{ 'bg-gray-100 text-gray-900': $page.url === '/admin/schema' || $page.url === '/admin/schema/create' }">
                     Schema Builder
                 </Link>
 
-                <Link
-                    href="/admin/settings"
+                <Link href="/admin/settings"
                     class="flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 group"
-                    :class="{ 'bg-gray-100 text-gray-900': $page.url.startsWith('/admin/settings') }"
-                >
+                    :class="{ 'bg-gray-100 text-gray-900': $page.url.startsWith('/admin/settings') }">
                     Settings
                 </Link>
             </nav>
@@ -54,12 +54,8 @@ import { Link } from '@inertiajs/vue3';
         <div class="flex-1 flex flex-col overflow-hidden">
             <!-- Header -->
             <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-end px-6">
-                <Link
-                    href="/admin/logout"
-                    method="post"
-                    as="button"
-                    class="text-sm font-medium text-gray-700 hover:text-gray-900"
-                >
+                <Link href="/admin/logout" method="post" as="button"
+                    class="text-sm font-medium text-gray-700 hover:text-gray-900">
                     Logout
                 </Link>
             </header>
