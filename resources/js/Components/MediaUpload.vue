@@ -2,6 +2,9 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import { route } from '@/route-helper';
+import { useToast } from '@/composables/useToast';
+
+const { error: showError } = useToast();
 
 defineProps<{
     modelValue?: number | string;
@@ -42,7 +45,7 @@ const upload = async (event: Event) => {
         emit('update:modelValue', id);
     } catch (error) {
         console.error('Upload failed', error);
-        alert('Upload failed. Please try again.');
+        showError('Upload failed. Please try again.');
     } finally {
         isUploading.value = false;
         if (fileInput.value) fileInput.value.value = '';

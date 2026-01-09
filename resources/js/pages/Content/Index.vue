@@ -2,6 +2,8 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { route } from '@/route-helper';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { ref } from 'vue';
 
 const props = defineProps<{
     contentType: {
@@ -20,9 +22,22 @@ const props = defineProps<{
     };
 }>();
 
-const deleteItem = (id: number) => {
-    if (confirm('Are you sure you want to delete this item?')) {
-        router.delete(route('admin.content.destroy', { slug: props.contentType.slug, id }));
+const confirmingDeletion = ref(false);
+const itemToDelete = ref<number | null>(null);
+
+const confirmDelete = (id: number) => {
+    itemToDelete.value = id;
+    confirmingDeletion.value = true;
+};
+
+const deleteItem = () => {
+    if (itemToDelete.value) {
+        router.delete(route('admin.content.destroy', { slug: props.contentType.slug, id: itemToDelete.value }), {
+            onFinish: () => {
+                confirmingDeletion.value = false;
+                itemToDelete.value = null;
+            }
+        });
     }
 };
 
@@ -127,7 +142,7 @@ const formatValue = (value: any, type: string) => {
                                                     :href="route('admin.content.edit', { slug: contentType.slug, id: item.id })"
                                                     class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-4">
                                                     Edit</Link>
-                                                <button @click="deleteItem(item.id)"
+                                                <button @click="confirmDelete(item.id)"
                                                     class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">Delete</button>
                                             </td>
                                         </tr>
@@ -139,5 +154,8 @@ const formatValue = (value: any, type: string) => {
                 </div>
             </div>
         </div>
+        <ConfirmModal :show="confirmingDeletion" title="Delete Content Item"
+            content="Are you sure you want to delete this item? This action cannot be undone." confirm-text="Delete"
+            @close="confirmingDeletion = false" @confirm="deleteItem" />
     </AdminLayout>
 </template>

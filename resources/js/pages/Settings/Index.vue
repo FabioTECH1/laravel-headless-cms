@@ -5,8 +5,15 @@ import { useForm, Head, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { route } from '@/route-helper';
 import { useTheme } from '@/composables/useTheme';
+import { useToast } from '@/composables/useToast';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { ref } from 'vue';
 
-const props = defineProps<{
+const toast = useToast();
+const confirmingRevocation = ref(false);
+const tokenToRevoke = ref<number | null>(null);
+
+defineProps<{
     tokens: Array<{
         id: number;
         name: string;
@@ -63,16 +70,27 @@ const createToken = () => {
     });
 };
 
-const deleteToken = (id: number) => {
-    if (confirm('Are you sure you want to revoke this token?')) {
-        useForm({}).delete(route('admin.settings.tokens.destroy', id));
+const confirmRevocation = (id: number) => {
+    tokenToRevoke.value = id;
+    confirmingRevocation.value = true;
+};
+
+const revokeToken = () => {
+    if (tokenToRevoke.value) {
+        useForm({}).delete(route('admin.settings.tokens.destroy', tokenToRevoke.value), {
+            onFinish: () => {
+                confirmingRevocation.value = false;
+                tokenToRevoke.value = null;
+                toast.success('Token revoked successfully');
+            }
+        });
     }
 };
 
 const copyToken = () => {
     if (newToken.value) {
         navigator.clipboard.writeText(newToken.value);
-        alert('Token copied to clipboard!');
+        toast.success('Token copied to clipboard!');
     }
 };
 </script>
@@ -222,13 +240,20 @@ const copyToken = () => {
                                     Last used: {{ token.last_used_at }} • Created: {{ token.created_at }}
                                 </p>
                             </div>
-                            <button @click="deleteToken(token.id)"
+                            <button @click="confirmRevocation(token.id)"
                                 class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium">
                                 Revoke
                             </button>
                         </div>
                     </div>
                 </div>
+
+                <!-- System Status -->
+                <!-- ... -->
+
+                <ConfirmModal :show="confirmingRevocation" title="Revoke API Token"
+                    content="Are you sure you want to revoke this API token? This action cannot be undone and any application using this token will lose access."
+                    confirm-text="Revoke Token" @close="confirmingRevocation = false" @confirm="revokeToken" />
 
                 <!-- System Status -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
@@ -238,7 +263,7 @@ const copyToken = () => {
                         <div>
                             <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Laravel Version</p>
                             <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ systemInfo.laravel_version
-                                }}</p>
+                            }}</p>
                         </div>
                         <div>
                             <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Environment</p>

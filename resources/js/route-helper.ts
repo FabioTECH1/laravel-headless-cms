@@ -12,6 +12,7 @@ export function route(name: string, params?: any): string {
         'admin.schema.index': adminSchema.index,
         'admin.schema.edit': adminSchema.edit,
         'admin.schema.update': adminSchema.update,
+        'admin.schema.destroy': adminSchema.destroy,
         'admin.content.index': adminContent.index,
         'admin.content.create': adminContent.create,
         'admin.content.store': adminContent.store,

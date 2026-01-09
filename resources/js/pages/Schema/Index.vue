@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { route } from '@/route-helper';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { ref } from 'vue';
 
 defineProps<{
     types: Array<{
@@ -11,6 +13,25 @@ defineProps<{
         created_at: string;
     }>;
 }>();
+
+const confirmingDeletion = ref(false);
+const typeToDelete = ref<{ name: string; slug: string } | null>(null);
+
+const confirmDelete = (type: { name: string; slug: string }) => {
+    typeToDelete.value = type;
+    confirmingDeletion.value = true;
+};
+
+const deleteType = () => {
+    if (typeToDelete.value) {
+        router.delete(route('admin.schema.destroy', typeToDelete.value.slug), {
+            onFinish: () => {
+                confirmingDeletion.value = false;
+                typeToDelete.value = null;
+            }
+        });
+    }
+};
 </script>
 
 <template>
@@ -83,6 +104,10 @@ defineProps<{
                                                     class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">
                                                     Edit<span class="sr-only">, {{ type.name }}</span>
                                                 </Link>
+                                                <button @click="confirmDelete(type)"
+                                                    class="ml-4 text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
+                                                    Delete<span class="sr-only">, {{ type.name }}</span>
+                                                </button>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -93,5 +118,9 @@ defineProps<{
                 </div>
             </div>
         </div>
+        <ConfirmModal :show="confirmingDeletion" title="Delete Content Type"
+            content="Are you sure you want to delete this content type? This action cannot be undone and will PERMANENTLY DELETE all content entries associated with this type."
+            confirm-text="Delete Type" confirm-type="danger" @close="confirmingDeletion = false"
+            @confirm="deleteType" />
     </AdminLayout>
 </template>

@@ -18,6 +18,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/schema', [\App\Http\Controllers\Admin\SchemaController::class, 'store'])->name('admin.schema.store');
     Route::get('/schema/{slug}/edit', [\App\Http\Controllers\Admin\SchemaController::class, 'edit'])->name('admin.schema.edit');
     Route::put('/schema/{slug}', [\App\Http\Controllers\Admin\SchemaController::class, 'update'])->name('admin.schema.update');
+    Route::delete('/schema/{slug}', [\App\Http\Controllers\Admin\SchemaController::class, 'destroy'])->name('admin.schema.destroy');
 
     Route::get('/content/{slug}', [\App\Http\Controllers\Admin\ContentController::class, 'index'])->name('admin.content.index');
     Route::post('/content/{slug}', [\App\Http\Controllers\Admin\ContentController::class, 'store'])->name('admin.content.store');

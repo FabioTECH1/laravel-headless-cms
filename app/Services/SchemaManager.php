@@ -120,4 +120,15 @@ class SchemaManager
             default => throw new \InvalidArgumentException("Unsupported field type: {$type}"),
         };
     }
+
+    public function deleteType(string $slug): void
+    {
+        $contentType = ContentType::where('slug', $slug)->firstOrFail();
+        $tableName = Str::plural(Str::snake($contentType->name));
+
+        DB::transaction(function () use ($contentType, $tableName) {
+            $contentType->delete();
+            Schema::dropIfExists($tableName);
+        });
+    }
 }

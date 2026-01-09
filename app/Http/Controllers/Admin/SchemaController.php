@@ -81,4 +81,15 @@ class SchemaController extends Controller
 
         return redirect()->route('admin.schema.index')->with('success', 'Schema updated successfully.');
     }
+
+    public function destroy(string $slug, SchemaManager $manager)
+    {
+        try {
+            $manager->deleteType($slug);
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
+
+        return redirect()->route('admin.schema.index')->with('success', 'Schema deleted successfully.');
+    }
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import ToastContainer from '@/Components/ToastContainer.vue';
 </script>
 
 <template>
@@ -67,4 +68,5 @@ import { Link } from '@inertiajs/vue3';
             </main>
         </div>
     </div>
+    <ToastContainer />
 </template>
