@@ -85,7 +85,7 @@ test('it can add columns to an existing type', function () {
 
     $schemaManager->updateType('product', [
         ['name' => 'price', 'type' => 'integer'],
-    ]);
+    ], false, false);
 
     expect(Schema::hasColumn('products', 'price'))->toBeTrue();
     assertDatabaseCount('content_fields', 2);

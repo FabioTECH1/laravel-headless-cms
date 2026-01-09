@@ -46,6 +46,11 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'contentTypes' => \App\Models\ContentType::select('id', 'name', 'slug')->get(),
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'token' => fn () => $request->session()->get('token'),
+            ],
         ];
     }
 }

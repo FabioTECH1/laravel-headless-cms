@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { route } from '@/route-helper';
 
 defineProps<{
     types: Array<{
@@ -64,13 +65,15 @@ defineProps<{
                                                 class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                                                 {{ type.name }}</td>
                                             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ type.slug
-                                            }}</td>
+                                                }}</td>
                                             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ new
                                                 Date(type.created_at).toLocaleDateString() }}</td>
                                             <td
                                                 class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                <a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span
-                                                        class="sr-only">, {{ type.name }}</span></a>
+                                                <Link :href="route('admin.schema.edit', type.slug)"
+                                                    class="text-indigo-600 hover:text-indigo-900">
+                                                    Edit<span class="sr-only">, {{ type.name }}</span>
+                                                </Link>
                                             </td>
                                         </tr>
                                     </tbody>

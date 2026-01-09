@@ -23,6 +23,8 @@ test('it filters unpublished content by default', function () {
         ['name' => 'title', 'type' => 'text'],
     ]);
 
+    \App\Models\ContentType::where('slug', 'post')->update(['is_public' => true]);
+
     $entity = (new \App\Models\DynamicEntity)->bind('post');
 
     // Published Post
@@ -58,6 +60,16 @@ test('it allows viewing drafts via status parameter', function () {
         ['name' => 'title', 'type' => 'text'],
     ]);
 
+    // Viewing drafts requires auth likely, or at least public content type + some permission?
+    // Based on middleware, if public and GET, it passes. But status=draft usually implies "preview" or admin access.
+    // Let's check if the standard API allows seeing drafts if public.
+    // Actually, DynamicEntity definition of scopePublished vs all might depend on who is asking.
+    // For now, let's assume we need to be authenticated to see non-published items if the code enforces it,
+    // OR if the scope logic is simple, maybe just auth is enough.
+    // Let's try acting as admin/user.
+
+    $user = \App\Models\User::factory()->create();
+
     $entity = (new \App\Models\DynamicEntity)->bind('post');
 
     $entity->create([
@@ -65,7 +77,7 @@ test('it allows viewing drafts via status parameter', function () {
         'published_at' => null,
     ]);
 
-    $response = $this->getJson('/api/content/post?status=draft');
+    $response = $this->actingAs($user)->getJson('/api/content/post?status=draft');
 
     $response->assertStatus(200)
         ->assertJsonFragment(['title' => 'Draft Post']);

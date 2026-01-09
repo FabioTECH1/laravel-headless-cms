@@ -31,6 +31,11 @@ class ContentController extends Controller
         $rules = $validator->getRules($contentType);
         $attributes = $request->validate($rules);
 
+        // Auto-assign user_id if ownership is enabled
+        if ($contentType->has_ownership) {
+            $attributes['user_id'] = $request->user()->id;
+        }
+
         $entity = (new DynamicEntity)->bind($slug);
         $item = $entity->create($attributes);
 
@@ -53,19 +58,48 @@ class ContentController extends Controller
 
         $item = $entity->findOrFail($id);
 
+        // Enforce ownership if enabled
+        if ($contentType->has_ownership) {
+            $user = $request->user();
+            // Since route is protected by auth:sanctum, user should be present.
+            // But we check to be safe or satisfy static analysis
+            abort_unless($user, 401, 'Authentication required.');
+
+            $isOwner = $item->user_id === $user->id;
+            $isAdmin = $user->is_admin;
+
+            abort_unless($isOwner || $isAdmin, 403, 'You do not have permission to update this content.');
+        }
+
         $rules = $validator->getRules($contentType, $id);
         $attributes = $request->validate($rules);
+
+        // Prevent changing user_id
+        unset($attributes['user_id']);
 
         $item->update($attributes);
 
         return response()->json($item);
     }
 
-    public function destroy(string $slug, string $id)
+    public function destroy(Request $request, string $slug, string $id)
     {
+        $contentType = \App\Models\ContentType::where('slug', $slug)->firstOrFail();
         $entity = (new DynamicEntity)->bind($slug);
 
         $item = $entity->findOrFail($id);
+
+        // Enforce ownership if enabled
+        if ($contentType->has_ownership) {
+            $user = $request->user();
+            abort_unless($user, 401, 'Authentication required.');
+
+            $isOwner = $item->user_id === $user->id;
+            $isAdmin = $user->is_admin;
+
+            abort_unless($isOwner || $isAdmin, 403, 'You do not have permission to delete this content.');
+        }
+
         $item->delete();
 
         return response()->noContent();

@@ -20,7 +20,7 @@ beforeEach(function () {
 
 test('admin can list content items', function () {
     // Create a dummy item
-    (new \App\Models\DynamicEntity)->bind('blog-post')->create(['title' => 'Hello World']);
+    (new \App\Models\DynamicEntity)->bind('blog-post')->create(['title' => 'Hello World', 'is_awesome' => false]);
 
     $response = $this->actingAs($this->admin)->get(route('admin.content.index', 'blog-post'));
 
@@ -66,7 +66,7 @@ test('admin can create content item', function () {
 });
 
 test('admin can edit content item', function () {
-    $item = (new \App\Models\DynamicEntity)->bind('blog-post')->create(['title' => 'Old Title']);
+    $item = (new \App\Models\DynamicEntity)->bind('blog-post')->create(['title' => 'Old Title', 'is_awesome' => false]);
 
     $response = $this->actingAs($this->admin)->put(route('admin.content.update', ['slug' => 'blog-post', 'id' => $item->id]), [
         'title' => 'Updated Title',
@@ -79,7 +79,7 @@ test('admin can edit content item', function () {
 });
 
 test('admin can delete content item', function () {
-    $item = (new \App\Models\DynamicEntity)->bind('blog-post')->create(['title' => 'Start Delete']);
+    $item = (new \App\Models\DynamicEntity)->bind('blog-post')->create(['title' => 'Start Delete', 'is_awesome' => false]);
 
     $response = $this->actingAs($this->admin)->delete(route('admin.content.destroy', ['slug' => 'blog-post', 'id' => $item->id]));
 

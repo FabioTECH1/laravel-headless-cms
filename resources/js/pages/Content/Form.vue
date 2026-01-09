@@ -1,8 +1,12 @@
+<script setup lang="ts">
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import MediaUpload from '@/Components/MediaUpload.vue';
 import RichEditor from '@/Components/RichEditor.vue';
+import Input from '@/Components/Input.vue';
+import Select from '@/Components/Select.vue';
 import { useForm, Head } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { route } from '@/route-helper';
 
 const props = defineProps<{
     contentType: {
@@ -63,25 +67,22 @@ const submit = () => {
 
                     <form @submit.prevent="submit">
                         <div v-for="field in contentType.fields" :key="field.name" class="mb-6">
-                            <label :for="field.name" class="block text-sm font-medium text-gray-700 mb-1 capitalize">{{
-                                field.name.replace(/_/g, ' ') }}</label>
-
                             <!-- Text Input -->
-                            <input v-if="field.type === 'text'" :id="field.name" v-model="form[field.name]" type="text"
-                                class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                            <Input v-if="field.type === 'text'" :id="field.name" v-model="form[field.name]"
+                                :label="field.name.replace(/_/g, ' ')" />
 
                             <!-- Integer Input -->
-                            <input v-if="field.type === 'integer'" :id="field.name" v-model="form[field.name]"
-                                type="number"
-                                class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                            <Input v-if="field.type === 'integer'" :id="field.name" v-model="form[field.name]"
+                                type="number" :label="field.name.replace(/_/g, ' ')" />
 
-                            <!-- Long Text (Textarea) -->
                             <!-- Long Text (RichEditor) -->
                             <div v-if="field.type === 'longtext'">
-                                <RichEditor
-                                    :model-value="form[field.name]"
-                                    @update:model-value="val => form[field.name] = val"
-                                />
+                                <label :for="field.name"
+                                    class="block text-sm font-medium text-gray-700 mb-1.5 capitalize">
+                                    {{ field.name.replace(/_/g, ' ') }}
+                                </label>
+                                <RichEditor :model-value="form[field.name]"
+                                    @update:model-value="val => form[field.name] = val" />
                             </div>
 
                             <!-- Checkbox -->
@@ -94,36 +95,28 @@ const submit = () => {
                             </div>
 
                             <!-- Datetime -->
-                            <input v-if="field.type === 'datetime'" :id="field.name" v-model="form[field.name]"
-                                type="datetime-local"
-                                class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                            <Input v-if="field.type === 'datetime'" :id="field.name" v-model="form[field.name]"
+                                type="datetime-local" :label="field.name.replace(/_/g, ' ')" />
 
                             <!-- Relation (Belongs To) -->
-                            <div v-if="field.type === 'relation'">
-                                <select
-                                    :id="field.name"
-                                    v-model="form[field.name + '_id']"
-                                    class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                >
-                                    <option value="">Select {{ field.name.replace(/_/g, ' ') }}</option>
-                                    <option v-for="option in (options?.[field.name] || [])" :key="option.id" :value="option.id">
-                                        {{ option.label }}
-                                    </option>
-                                </select>
-                            </div>
+                            <Select v-if="field.type === 'relation'" :id="field.name" v-model="form[field.name + '_id']"
+                                :label="field.name.replace(/_/g, ' ')"
+                                :placeholder="`Select ${field.name.replace(/_/g, ' ')}`"
+                                :options="(options?.[field.name] || []).map(opt => ({ value: opt.id, label: opt.label }))" />
 
                             <!-- Media Upload -->
                             <div v-if="field.type === 'media'">
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5 capitalize">
+                                    {{ field.name.replace(/_/g, ' ') }}
+                                </label>
                                 <MediaUpload v-model="form[field.name + '_id']" />
                             </div>
                         </div>
 
                         <!-- Published At (System Field) -->
                         <div class="mb-6 border-t pt-4">
-                            <label for="published_at" class="block text-sm font-medium text-gray-700 mb-1">Published
-                                At</label>
-                            <input id="published_at" v-model="form.published_at" type="datetime-local"
-                                class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                            <Input id="published_at" v-model="form.published_at" type="datetime-local"
+                                label="Published At" />
                             <p class="text-xs text-gray-500 mt-1">Leave empty to save as Draft.</p>
                         </div>
 

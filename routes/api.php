@@ -1,18 +1,23 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ContentController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Public authentication routes
+Route::post('/auth/register', [AuthController::class, 'register']);
+Route::post('/auth/login', [AuthController::class, 'login']);
 
-Route::prefix('content')->group(function () {
-    Route::middleware([\App\Http\Middleware\CheckContentAccess::class])->group(function () {
-        Route::get('/{slug}', [\App\Http\Controllers\Api\ContentController::class, 'index']);
-        Route::post('/{slug}', [\App\Http\Controllers\Api\ContentController::class, 'store']);
-        Route::get('/{slug}/{id}', [\App\Http\Controllers\Api\ContentController::class, 'show']);
-        Route::put('/{slug}/{id}', [\App\Http\Controllers\Api\ContentController::class, 'update']);
-        Route::delete('/{slug}/{id}', [\App\Http\Controllers\Api\ContentController::class, 'destroy']);
-    });
+// Public content read routes
+Route::get('/content/{slug}', [ContentController::class, 'index']);
+Route::get('/content/{slug}/{id}', [ContentController::class, 'show']);
+
+// Protected routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+    // Content write routes (require authentication)
+    Route::post('/content/{slug}', [ContentController::class, 'store']);
+    Route::put('/content/{slug}/{id}', [ContentController::class, 'update']);
+    Route::delete('/content/{slug}/{id}', [ContentController::class, 'destroy']);
 });

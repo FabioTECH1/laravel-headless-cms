@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { route } from '@/route-helper';
 
 const props = defineProps<{
     contentType: {
@@ -25,8 +26,24 @@ const deleteItem = (id: number) => {
     }
 };
 
-// Find the first text field to use as the main identifier/label
-const titleField = props.contentType.fields?.find(f => f.type === 'text')?.name || 'id';
+// Get displayable fields (limit to first 3-4 for table readability)
+const displayFields = props.contentType.fields.slice(0, 3);
+
+// Format field value for display
+const formatValue = (value: any, type: string) => {
+    if (value === null || value === undefined) return '-';
+
+    switch (type) {
+        case 'boolean':
+            return value ? 'Yes' : 'No';
+        case 'datetime':
+            return new Date(value).toLocaleDateString();
+        case 'longtext':
+            return value.length > 50 ? value.substring(0, 50) + '...' : value;
+        default:
+            return value;
+    }
+};
 </script>
 
 <template>
@@ -58,9 +75,10 @@ const titleField = props.contentType.fields?.find(f => f.type === 'text')?.name 
                                             <th scope="col"
                                                 class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
                                                 ID</th>
-                                            <th scope="col"
+                                            <!-- Dynamic field columns -->
+                                            <th v-for="field in displayFields" :key="field.name" scope="col"
                                                 class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 capitalize">
-                                                {{ titleField.toString().replace(/_/g, ' ') }}</th>
+                                                {{ field.name.replace(/_/g, ' ') }}</th>
                                             <th scope="col"
                                                 class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                                                 Created At</th>
@@ -74,16 +92,18 @@ const titleField = props.contentType.fields?.find(f => f.type === 'text')?.name 
                                     </thead>
                                     <tbody class="divide-y divide-gray-200 bg-white">
                                         <tr v-if="items.data.length === 0">
-                                            <td colspan="5" class="py-4 text-center text-sm text-gray-500">No items
+                                            <td :colspan="displayFields.length + 4"
+                                                class="py-4 text-center text-sm text-gray-500">No items
                                                 found.</td>
                                         </tr>
                                         <tr v-for="item in items.data" :key="item.id">
                                             <td
                                                 class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                                                 {{ item.id }}</td>
-                                            <td
-                                                class="whitespace-nowrap px-3 py-4 text-sm text-gray-900 truncate max-w-xs">
-                                                {{ item[titleField] }}</td>
+                                            <!-- Dynamic field values -->
+                                            <td v-for="field in displayFields" :key="field.name"
+                                                class="px-3 py-4 text-sm text-gray-900 max-w-xs truncate">
+                                                {{ formatValue(item[field.name], field.type) }}</td>
                                             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ new
                                                 Date(item.created_at).toLocaleDateString() }}</td>
                                             <td class="whitespace-nowrap px-3 py-4 text-sm">

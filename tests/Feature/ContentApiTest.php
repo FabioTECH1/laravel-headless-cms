@@ -13,6 +13,9 @@ test('it can list content', function () {
         ['name' => 'title', 'type' => 'text'],
     ]);
 
+    // Make type public so we can list without auth
+    \App\Models\ContentType::where('slug', 'task')->update(['is_public' => true]);
+
     // Create a dummy task
     (new \App\Models\DynamicEntity)->bind('task')->create([
         'title' => 'Test Task',
@@ -32,7 +35,9 @@ test('it can create content', function () {
         ['name' => 'title', 'type' => 'text'],
     ]);
 
-    $response = $this->postJson('/api/content/task', [
+    $user = \App\Models\User::factory()->create();
+
+    $response = $this->actingAs($user)->postJson('/api/content/task', [
         'title' => 'New Task',
     ]);
 
@@ -58,7 +63,9 @@ test('it can delete content', function () {
         'published_at' => now(), // Needed for visibility check before delete (implicit findOrFail)
     ]);
 
-    $response = $this->deleteJson("/api/content/task/{$entity->id}");
+    $user = \App\Models\User::factory()->create();
+
+    $response = $this->actingAs($user)->deleteJson("/api/content/task/{$entity->id}");
 
     $response->assertStatus(204);
 

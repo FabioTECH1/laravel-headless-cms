@@ -19,6 +19,11 @@ class SettingsController extends Controller
                     'created_at' => $token->created_at->format('Y-m-d H:i'),
                 ];
             }),
+            'systemInfo' => [
+                'laravel_version' => app()->version(),
+                'environment' => app()->environment(),
+                'debug_mode' => config('app.debug'),
+            ],
         ]);
     }
 
@@ -39,5 +44,34 @@ class SettingsController extends Controller
         auth()->user()->tokens()->where('id', $id)->delete();
 
         return back()->with('success', 'Token revoked successfully.');
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.auth()->id()],
+        ]);
+
+        auth()->user()->update([
+            'name' => $request->name,
+            'email' => $request->email,
+        ]);
+
+        return back()->with('success', 'Profile updated successfully.');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        auth()->user()->update([
+            'password' => bcrypt($request->password),
+        ]);
+
+        return back()->with('success', 'Password updated successfully.');
     }
 }

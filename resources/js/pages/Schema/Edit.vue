@@ -5,13 +5,26 @@ import Select from '@/Components/Select.vue';
 import { useForm, Head } from '@inertiajs/vue3';
 import { route } from '@/route-helper';
 
+const props = defineProps<{
+    contentType: {
+        id: number;
+        name: string;
+        slug: string;
+        is_public: boolean;
+        has_ownership: boolean;
+        fields: Array<{
+            id: number;
+            name: string;
+            type: string;
+            settings: { required: boolean; unique: boolean };
+        }>;
+    };
+}>();
+
 const form = useForm({
-    name: '',
-    is_public: false,
-    has_ownership: false,
-    fields: [
-        { name: '', type: 'text', settings: { required: false, unique: false } }
-    ]
+    is_public: props.contentType.is_public,
+    has_ownership: props.contentType.has_ownership,
+    fields: [] as Array<{ name: string; type: string; settings: { required: boolean; unique: boolean } }>
 });
 
 const fieldTypeOptions = [
@@ -27,30 +40,29 @@ const addField = () => {
 };
 
 const removeField = (index: number) => {
-    if (form.fields.length > 1) {
-        form.fields.splice(index, 1);
-    }
+    form.fields.splice(index, 1);
 };
 
 const submit = () => {
-    form.post(route('admin.schema.store'));
+    form.put(route('admin.schema.update', props.contentType.slug));
 };
 </script>
 
 <template>
     <AdminLayout>
 
-        <Head title="Create Content Type" />
+        <Head :title="`Edit ${contentType.name}`" />
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg max-w-2xl mx-auto p-6">
-                    <h2 class="text-2xl font-bold mb-6">Create Content Type</h2>
+                    <h2 class="text-2xl font-bold mb-6">Edit {{ contentType.name }}</h2>
 
                     <form @submit.prevent="submit">
+                        <!-- Content Type Name (Read-only) -->
                         <div class="mb-6">
-                            <Input id="name" v-model="form.name" label="Name" placeholder="e.g. BlogPost"
-                                :error="form.errors.name" required />
+                            <Input id="name" :model-value="contentType.name" label="Name" disabled />
+                            <p class="text-xs text-gray-500 mt-1">Content type name cannot be changed</p>
                         </div>
 
                         <!-- Content Type Settings -->
@@ -78,8 +90,33 @@ const submit = () => {
                             </div>
                         </div>
 
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Fields</label>
+                        <!-- Existing Fields (Read-only) -->
+                        <div class="mb-6 pb-6 border-b border-gray-200">
+                            <h3 class="text-sm font-medium text-gray-900 mb-3">Existing Fields</h3>
+                            <div class="space-y-2">
+                                <div v-for="field in contentType.fields" :key="field.id"
+                                    class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex-1">
+                                        <span class="text-sm font-medium text-gray-900">{{ field.name }}</span>
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        {{fieldTypeOptions.find(opt => opt.value === field.type)?.label || field.type
+                                        }}
+                                    </div>
+                                    <div class="flex gap-2 text-xs text-gray-500">
+                                        <span v-if="field.settings.required"
+                                            class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded">Required</span>
+                                        <span v-if="field.settings.unique"
+                                            class="px-2 py-1 bg-purple-100 text-purple-700 rounded">Unique</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Existing fields cannot be modified or deleted</p>
+                        </div>
+
+                        <!-- New Fields -->
+                        <div class="mb-6" v-if="form.fields.length > 0">
+                            <h3 class="text-sm font-medium text-gray-900 mb-3">New Fields</h3>
 
                             <div class="space-y-4">
                                 <div v-for="(field, index) in form.fields" :key="index"
@@ -95,8 +132,7 @@ const submit = () => {
                                         </div>
 
                                         <button type="button" @click="removeField(index)"
-                                            :disabled="form.fields.length === 1"
-                                            class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                            class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                                             title="Remove Field">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                 stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
@@ -121,17 +157,24 @@ const submit = () => {
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
+                        <!-- Add Field Button -->
+                        <div class="mb-6">
                             <button type="button" @click="addField"
-                                class="mt-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
-                                <span>+ Add Field</span>
+                                class="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
+                                <span>+ Add New Field</span>
                             </button>
                         </div>
 
-                        <div class="flex justify-end pt-4 border-t border-gray-100">
+                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                            <a :href="route('admin.schema.index')"
+                                class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                                Cancel
+                            </a>
                             <button type="submit" :disabled="form.processing"
                                 class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                                Create Schema
+                                Update Schema
                             </button>
                         </div>
                     </form>

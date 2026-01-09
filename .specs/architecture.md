@@ -205,6 +205,50 @@ System tables defining content structure:
 
 ---
 
+
+## Phase 10.5: Profile & Password Management
+
+**1. Controllers:**
+   - **Create `Admin\ProfileController`:**
+     - `update(Request $request)`:
+       - Validate `name` (string), `email` (email, unique users, ignore current ID).
+       - Update `auth()->user()`.
+       - Return Back with flash success.
+   - **Create `Admin\PasswordController`:**
+     - `update(Request $request)`:
+       - Validate `current_password` (current_password rule), `password` (confirmed, min:8).
+       - Update `auth()->user()` with hashed password.
+       - Return Back with flash success.
+
+**2. Routes (`routes/admin.php`):**
+   - `PUT /settings/profile` -> `ProfileController@update`.
+   - `PUT /settings/password` -> `PasswordController@update`.
+
+**3. Frontend (`Settings/Index.vue`):**
+   - **Refactor:** Convert the existing layout into a **Tabbed Interface**.
+     - **Tabs:** "API Tokens", "Profile", "Security".
+   - **Tab 1 (API Tokens):** Keep existing token management here.
+   - **Tab 2 (Profile):**
+     - Form: Name, Email.
+     - Button: "Save Profile".
+     - Use `useForm` pointed to `PUT /admin/settings/profile`.
+   - **Tab 3 (Security):**
+     - Form: Current Password, New Password, Confirm Password.
+     - Button: "Update Password".
+     - Use `useForm` pointed to `PUT /admin/settings/password`.
+
+**4. Testing (`tests/Feature/Admin/ProfileTest.php`):**
+   - **Test 1:** `admin can update profile`.
+     - Action: Login. PUT new name/email.
+     - Assert: DB updated.
+   - **Test 2:** `admin can update password`.
+     - Action: Login. PUT current + new password.
+     - Assert: Login with old password fails. Login with new password succeeds.
+   - **Test 3:** `password update fails with wrong current password`.
+     - Action: PUT wrong current password.
+     - Assert: Session errors 'current_password'.
+
+
 ## Phase 11: Dynamic Validation Engine
 
 ### Service
@@ -221,6 +265,55 @@ System tables defining content structure:
 - Supports filtering, sorting, and relationship includes via URL parameters.
 
 ---
+
+## Phase 12.5: Public Auth & Content Ownership
+**1. Public Auth API (`Api\AuthController`):**
+   - **Controller:** Create `App\Http\Controllers\Api\AuthController`.
+   - **Method `register(Request $request)`:**
+     - Validate: `name`, `email` (unique), `password` (confirmed).
+     - Create User (`is_admin` = false).
+     - Return: `{ token: $user->createToken('default')->plainTextToken, user: ... }`.
+   - **Method `login(Request $request)`:**
+     - Validate: `email`, `password`.
+     - Check Auth.
+     - Return: `{ token: ... }`.
+   - **Routes (`routes/api.php`):**
+     - `POST /auth/register` -> `AuthController@register`
+     - `POST /auth/login` -> `AuthController@login`
+
+**2. Schema Ownership Logic:**
+   - **Database:** Ensure `content_types` table has `has_ownership` (boolean) column (done in Phase 1).
+   - **Schema Manager Update (`Services\SchemaManager`):**
+     - Update `createType` and `updateType`.
+     - **Logic:** If `has_ownership` is true (passed in settings):
+       - Create column: `$table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');`
+       - Add index.
+
+**3. Frontend Update (`Schema/Create.vue`):**
+   - Add a Checkbox: "User Owned Content" (bind to `form.has_ownership`).
+   - Description: "If checked, records will be linked to the creator, and only they can edit/delete them."
+
+**4. Controller Enforcement (`Api\ContentController`):**
+   - Update `store`, `update`, `destroy`.
+   - **Store:**
+     - If `$type->has_ownership`:
+       - Check `auth()->check()`.
+       - Force `user_id` to `auth()->id()`.
+   - **Update/Destroy:**
+     - If `$type->has_ownership`:
+       - Check `if ($item->user_id !== auth()->id() && !auth()->user()->is_admin)`.
+       - If mismatch -> Abort 403 Forbidden.
+
+**5. Testing (`tests/Feature/UserContentTest.php`):**
+   - **Test 1:** `public user can register and login`.
+   - **Test 2:** `user can create owned content`.
+     - Setup: 'Diary' type (`has_ownership`=true).
+     - Action: Login as User A. POST /api/content/diaries.
+     - Assert: DB record has User A's ID.
+   - **Test 3:** `user cannot edit others content`.
+     - Action: User A tries to UPDATE User B's diary.
+     - Assert: 403 Forbidden.
+
 
 ## Phase 13: Production Deployment
 

@@ -14,6 +14,11 @@ class ContentType extends Model
         'has_ownership',
     ];
 
+    protected $casts = [
+        'is_public' => 'boolean',
+        'has_ownership' => 'boolean',
+    ];
+
     public function fields()
     {
         return $this->hasMany(ContentField::class);
