@@ -45,7 +45,7 @@ const form = useForm(
 );
 
 const submit = () => {
-    if (isEditing.value) {
+    if (isEditing.value && props.item) {
         form.put(route('admin.content.update', { slug: props.contentType.slug, id: props.item.id }));
     } else {
         form.post(route('admin.content.store', props.contentType.slug));
@@ -60,8 +60,9 @@ const submit = () => {
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg max-w-2xl mx-auto p-6">
-                    <h2 class="text-2xl font-bold mb-6">{{ isEditing ? 'Edit' : 'Create' }} {{ contentType.name }}</h2>
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg max-w-2xl mx-auto p-6">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">{{ isEditing ? 'Edit' : 'Create'
+                    }} {{ contentType.name }}</h2>
 
                     <form @submit.prevent="submit">
                         <!-- Dynamic Fields -->
@@ -77,7 +78,7 @@ const submit = () => {
                             <!-- Long Text (RichEditor) -->
                             <div v-if="field.type === 'longtext'">
                                 <label :for="field.name"
-                                    class="block text-sm font-medium text-gray-700 mb-1.5 capitalize">
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 capitalize">
                                     {{ field.name.replace(/_/g, ' ') }}
                                 </label>
                                 <RichEditor :model-value="form[field.name]"
@@ -87,8 +88,9 @@ const submit = () => {
                             <!-- Checkbox -->
                             <div v-if="field.type === 'boolean'" class="flex items-center">
                                 <input :id="field.name" v-model="form[field.name]" type="checkbox"
-                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-                                <label :for="field.name" class="ml-2 block text-sm text-gray-900 capitalize">
+                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded" />
+                                <label :for="field.name"
+                                    class="ml-2 block text-sm text-gray-900 dark:text-gray-300 capitalize">
                                     {{ field.name.replace(/_/g, ' ') }}
                                 </label>
                             </div>
@@ -105,7 +107,8 @@ const submit = () => {
 
                             <!-- Media Upload -->
                             <div v-if="field.type === 'media'">
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5 capitalize">
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 capitalize">
                                     {{ field.name.replace(/_/g, ' ') }}
                                 </label>
                                 <MediaUpload v-model="form[field.name + '_id']" />
@@ -114,14 +117,15 @@ const submit = () => {
 
                         <!-- Publishing Section Header -->
                         <div class="mt-10 mb-4">
-                            <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Publishing</h3>
+                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Publishing</h3>
                         </div>
 
                         <!-- Published At (System Field) -->
                         <div class="mb-6">
                             <Input id="published_at" v-model="form.published_at" type="datetime-local"
                                 label="Published At" />
-                            <p class="text-xs text-gray-500 mt-1">Leave empty to save as Draft.</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty to save as Draft.</p>
                         </div>
 
                         <div class="flex justify-end pt-4">

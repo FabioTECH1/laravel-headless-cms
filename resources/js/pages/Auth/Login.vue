@@ -19,15 +19,15 @@ const submit = () => {
 
     <Head title="Log in" />
 
-    <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
                 Sign in to your account
             </h2>
         </div>
 
         <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-            <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <div class="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
                 <form @submit.prevent="submit" class="space-y-6">
                     <div>
                         <Input id="email" v-model="form.email" type="email" label="Email address"
@@ -42,8 +42,8 @@ const submit = () => {
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <input id="remember_me" v-model="form.remember" name="remember_me" type="checkbox"
-                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-                            <label for="remember_me" class="ml-2 block text-sm text-gray-900">
+                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded" />
+                            <label for="remember_me" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                                 Remember me
                             </label>
                         </div>

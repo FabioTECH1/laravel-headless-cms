@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import axios from 'axios';
+import { route } from '@/route-helper';
 
-const props = defineProps<{
+defineProps<{
     modelValue?: number | string;
 }>();
 
@@ -57,33 +58,36 @@ const remove = () => {
 
 <template>
     <div
-        class="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors">
+        class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
         <div v-if="modelValue" class="text-center">
             <div v-if="previewUrl" class="mb-2">
                 <img v-if="previewUrl.match(/\.(jpeg|jpg|gif|png)$/i)" :src="previewUrl"
                     class="max-h-32 mx-auto rounded shadow-sm" />
-                <div v-else class="text-gray-500 text-sm p-4 bg-white rounded border">{{ filename }}</div>
+                <div v-else
+                    class="text-gray-500 dark:text-gray-400 text-sm p-4 bg-white dark:bg-gray-900 rounded border dark:border-gray-700">
+                    {{ filename }}</div>
             </div>
-            <div v-else class="text-sm text-gray-500 mb-2">
+            <div v-else class="text-sm text-gray-500 dark:text-gray-400 mb-2">
                 Media ID: {{ modelValue }}
             </div>
-            <button type="button" @click="remove" class="text-red-600 text-sm hover:underline">Remove Media</button>
+            <button type="button" @click="remove" class="text-red-600 dark:text-red-400 text-sm hover:underline">Remove
+                Media</button>
         </div>
 
         <div v-else class="text-center w-full">
             <template v-if="isUploading">
                 <div class="animate-pulse flex flex-col items-center">
                     <div class="h-4 w-4 bg-indigo-500 rounded-full mb-2"></div>
-                    <span class="text-sm text-gray-500">Uploading...</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Uploading...</span>
                 </div>
             </template>
             <template v-else>
                 <input ref="fileInput" type="file" class="hidden" @change="upload" />
                 <button type="button" @click="fileInput?.click()"
-                    class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                     Select File
                 </button>
-                <p class="text-xs text-gray-500 mt-2">Images, Docs (Max 10MB)</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Images, Docs (Max 10MB)</p>
             </template>
         </div>
     </div>
