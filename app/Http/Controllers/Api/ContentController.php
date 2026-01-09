@@ -8,11 +8,19 @@ use Illuminate\Http\Request;
 
 class ContentController extends Controller
 {
-    public function index(string $slug)
+    public function index(Request $request, string $slug)
     {
         $entity = (new DynamicEntity)->bind($slug);
 
-        return response()->json($entity->paginate());
+        $query = $entity->newQuery();
+
+        if ($request->query('status') === 'draft') {
+            // For now, allow viewing drafts if requested (in future, add permission check)
+        } else {
+            $query->published();
+        }
+
+        return response()->json($query->paginate());
     }
 
     public function store(Request $request, string $slug)

@@ -14,7 +14,10 @@ test('it can list content', function () {
     ]);
 
     // Create a dummy task
-    (new \App\Models\DynamicEntity)->bind('task')->create(['title' => 'Test Task']);
+    (new \App\Models\DynamicEntity)->bind('task')->create([
+        'title' => 'Test Task',
+        'published_at' => now(), // Needed for default list visibility
+    ]);
 
     // URL should use singular slug as per our SchemaManager logic
     $response = $this->getJson('/api/content/task');
@@ -50,7 +53,10 @@ test('it can delete content', function () {
         ['name' => 'title', 'type' => 'text'],
     ]);
 
-    $entity = (new \App\Models\DynamicEntity)->bind('task')->create(['title' => 'Task to Delete']);
+    $entity = (new \App\Models\DynamicEntity)->bind('task')->create([
+        'title' => 'Task to Delete',
+        'published_at' => now(), // Needed for visibility check before delete (implicit findOrFail)
+    ]);
 
     $response = $this->deleteJson("/api/content/task/{$entity->id}");
 

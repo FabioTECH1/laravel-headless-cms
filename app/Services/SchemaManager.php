@@ -48,6 +48,7 @@ class SchemaManager
 
                 $table->timestamps();
                 $table->softDeletes();
+                $table->timestamp('published_at')->nullable();
             });
 
             return $contentType;

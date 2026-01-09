@@ -10,6 +10,11 @@ class DynamicEntity extends Model
 {
     protected $guarded = [];
 
+    public function scopePublished($query)
+    {
+        return $query->whereNotNull('published_at')->where('published_at', '<=', now());
+    }
+
     public function bind(string $slug): self
     {
         $contentType = ContentType::where('slug', $slug)->with('fields')->first();
