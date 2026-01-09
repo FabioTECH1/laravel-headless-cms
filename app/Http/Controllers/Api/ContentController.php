@@ -23,11 +23,16 @@ class ContentController extends Controller
         return response()->json($query->paginate());
     }
 
-    public function store(Request $request, string $slug)
+    public function store(Request $request, string $slug, \App\Services\ContentValidator $validator)
     {
-        $entity = (new DynamicEntity)->bind($slug);
+        // Need ContentType for validation
+        $contentType = \App\Models\ContentType::where('slug', $slug)->with('fields')->firstOrFail();
 
-        $item = $entity->create($request->all());
+        $rules = $validator->getRules($contentType);
+        $attributes = $request->validate($rules);
+
+        $entity = (new DynamicEntity)->bind($slug);
+        $item = $entity->create($attributes);
 
         return response()->json($item, 201);
     }
@@ -41,12 +46,17 @@ class ContentController extends Controller
         return response()->json($item);
     }
 
-    public function update(Request $request, string $slug, string $id)
+    public function update(Request $request, string $slug, string $id, \App\Services\ContentValidator $validator)
     {
+        $contentType = \App\Models\ContentType::where('slug', $slug)->with('fields')->firstOrFail();
         $entity = (new DynamicEntity)->bind($slug);
 
         $item = $entity->findOrFail($id);
-        $item->update($request->all());
+
+        $rules = $validator->getRules($contentType, $id);
+        $attributes = $request->validate($rules);
+
+        $item->update($attributes);
 
         return response()->json($item);
     }

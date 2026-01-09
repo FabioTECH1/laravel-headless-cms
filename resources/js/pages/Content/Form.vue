@@ -1,5 +1,6 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import MediaUpload from '@/Components/MediaUpload.vue';
+import RichEditor from '@/Components/RichEditor.vue';
 import { useForm, Head } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -75,9 +76,13 @@ const submit = () => {
                                 class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
 
                             <!-- Long Text (Textarea) -->
-                            <textarea v-if="field.type === 'longtext'" :id="field.name" v-model="form[field.name]"
-                                rows="5"
-                                class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                            <!-- Long Text (RichEditor) -->
+                            <div v-if="field.type === 'longtext'">
+                                <RichEditor
+                                    :model-value="form[field.name]"
+                                    @update:model-value="val => form[field.name] = val"
+                                />
+                            </div>
 
                             <!-- Checkbox -->
                             <div v-if="field.type === 'boolean'" class="flex items-center">

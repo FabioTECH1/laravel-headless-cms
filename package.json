@@ -26,7 +26,10 @@
     },
     "dependencies": {
         "@inertiajs/vue3": "^2.3.7",
+        "@tailwindcss/typography": "^0.5.19",
         "@tailwindcss/vite": "^4.1.11",
+        "@tiptap/starter-kit": "^3.15.3",
+        "@tiptap/vue-3": "^3.15.3",
         "@vitejs/plugin-vue": "^6.0.0",
         "@vueuse/core": "^12.8.2",
         "class-variance-authority": "^0.7.1",
