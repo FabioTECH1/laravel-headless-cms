@@ -12,6 +12,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - inertiajs/inertia-laravel (INERTIA) - v2
 - laravel/framework (LARAVEL) - v12
 - laravel/prompts (PROMPTS) - v0
+- laravel/sanctum (SANCTUM) - v4
 - laravel/wayfinder (WAYFINDER) - v0
 - laravel/mcp (MCP) - v0
 - laravel/pint (PINT) - v1
