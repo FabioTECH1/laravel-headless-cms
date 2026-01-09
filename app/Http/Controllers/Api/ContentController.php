@@ -1,0 +1,55 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\DynamicEntity;
+use Illuminate\Http\Request;
+
+class ContentController extends Controller
+{
+    public function index(string $slug)
+    {
+        $entity = (new DynamicEntity)->bind($slug);
+
+        return response()->json($entity->paginate());
+    }
+
+    public function store(Request $request, string $slug)
+    {
+        $entity = (new DynamicEntity)->bind($slug);
+
+        $item = $entity->create($request->all());
+
+        return response()->json($item, 201);
+    }
+
+    public function show(string $slug, string $id)
+    {
+        $entity = (new DynamicEntity)->bind($slug);
+
+        $item = $entity->findOrFail($id);
+
+        return response()->json($item);
+    }
+
+    public function update(Request $request, string $slug, string $id)
+    {
+        $entity = (new DynamicEntity)->bind($slug);
+
+        $item = $entity->findOrFail($id);
+        $item->update($request->all());
+
+        return response()->json($item);
+    }
+
+    public function destroy(string $slug, string $id)
+    {
+        $entity = (new DynamicEntity)->bind($slug);
+
+        $item = $entity->findOrFail($id);
+        $item->delete();
+
+        return response()->noContent();
+    }
+}
