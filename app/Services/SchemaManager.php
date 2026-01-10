@@ -117,6 +117,7 @@ class SchemaManager
             'boolean' => $table->boolean($name),
             'datetime' => $table->dateTime($name),
             'relation' => $table->unsignedBigInteger($name.'_id')->nullable()->index(),
+            'media' => $table->unsignedBigInteger($name.'_id')->nullable()->index(),
             default => throw new \InvalidArgumentException("Unsupported field type: {$type}"),
         };
     }

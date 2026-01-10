@@ -15,8 +15,16 @@ class ContentController extends Controller
         $contentType = ContentType::where('slug', $slug)->with('fields')->firstOrFail();
         $entity = (new DynamicEntity)->bind($slug);
 
+        $with = [];
+        foreach ($contentType->fields as $field) {
+            if ($field->type === 'media') {
+                $with[] = $field->name;
+            }
+        }
+
         // MVP: Simple pagination, latest first
-        $items = $entity->latest()->paginate(10);
+        // Explicitly set 'from' to ensure pagination count query uses the correct table
+        $items = $entity->from($entity->getTable())->with($with)->latest()->paginate(10);
 
         return Inertia::render('Content/Index', [
             'contentType' => $contentType,

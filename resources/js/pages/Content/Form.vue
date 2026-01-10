@@ -32,7 +32,7 @@ const form = useForm(
             value = props.item ? Boolean(props.item[field.name]) : false;
         }
 
-        if (field.type === 'relation') {
+        if (field.type === 'relation' || field.type === 'media') {
             acc[field.name + '_id'] = props.item ? props.item[field.name + '_id'] : '';
             return acc;
         }

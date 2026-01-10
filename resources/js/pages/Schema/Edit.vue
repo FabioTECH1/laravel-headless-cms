@@ -33,6 +33,7 @@ const fieldTypeOptions = [
     { value: 'integer', label: 'Integer' },
     { value: 'boolean', label: 'Boolean' },
     { value: 'datetime', label: 'Datetime' },
+    { value: 'media', label: 'Media' },
 ];
 
 const addField = () => {

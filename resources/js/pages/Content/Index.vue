@@ -54,7 +54,8 @@ const formatValue = (value: any, type: string) => {
         case 'datetime':
             return new Date(value).toLocaleDateString();
         case 'longtext':
-            return value.length > 50 ? value.substring(0, 50) + '...' : value;
+            const stripped = value.replace(/<[^>]*>?/gm, '');
+            return stripped.length > 50 ? stripped.substring(0, 50) + '...' : stripped;
         default:
             return value;
     }
@@ -121,7 +122,17 @@ const formatValue = (value: any, type: string) => {
                                             <!-- Dynamic field values -->
                                             <td v-for="field in displayFields" :key="field.name"
                                                 class="px-3 py-4 text-sm text-gray-900 dark:text-gray-300 max-w-xs truncate">
-                                                {{ formatValue(item[field.name], field.type) }}</td>
+                                                <template v-if="field.type === 'media' && item[field.name]">
+                                                    <a :href="item[field.name].url" target="_blank"
+                                                        class="block h-10 w-10 relative">
+                                                        <img :src="item[field.name].url"
+                                                            class="h-10 w-10 rounded object-cover border border-gray-200 dark:border-gray-700" />
+                                                    </a>
+                                                </template>
+                                                <template v-else>
+                                                    {{ formatValue(item[field.name], field.type) }}
+                                                </template>
+                                            </td>
                                             <td
                                                 class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
                                                 {{ new

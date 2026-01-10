@@ -65,8 +65,7 @@ This project provides a robust backend for managing dynamic content schemas and 
     Running migrations will set up the core tables (users, personal_access_tokens, etc.) and any existing core schemas.
     ```bash
     touch database/database.sqlite
-    php artisan migrate
-    ```
+    php artisan migrate:fresh --seed
 
 6.  **Run Development Server**
     Start the Laravel development server and Vite build process:
@@ -81,12 +80,20 @@ This project provides a robust backend for managing dynamic content schemas and 
 
 ## 📖 Usage
 
-### Admin Panel
-Access the admin panel at `http://localhost:8000/login`.
--   **Dashboard**: Overview of system stats and content.
--   **Schemas**: Define new content types (e.g., "Articles", "Products").
--   **Content**: Create entries for your defined schemas.
--   **Settings**: Manage API tokens and user profile.
+## Admin Panel
+
+Access the admin panel at: `http://localhost:8000/admin/login`
+
+**Default Login Credentials:**
+- **Email:** `admin@admin.com`
+- **Password:** `password`
+
+### Features:
+
+- **Dashboard**: Overview of system statistics and recent content.
+- **Schemas**: Define new content types (e.g., "Articles", "Products", "Categories").
+- **Content**: Create, edit, and manage entries for your defined schemas.
+- **Settings**: Manage API tokens, user profiles, and system configuration.
 
 ### API Endpoints
 

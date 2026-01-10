@@ -27,3 +27,4 @@ yarn-error.log
 /.zed
 /.specs
 /GEMINI.md
+/database/database.sqlite

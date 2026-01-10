@@ -74,4 +74,24 @@ class SettingsController extends Controller
 
         return back()->with('success', 'Password updated successfully.');
     }
+
+    public function expiredPassword()
+    {
+        return Inertia::render('Auth/PasswordExpired');
+    }
+
+    public function updateExpiredPassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        auth()->user()->update([
+            'password' => bcrypt($request->password),
+            'must_change_password' => false,
+        ]);
+
+        return redirect()->route('admin.dashboard')->with('success', 'Password updated successfully.');
+    }
 }

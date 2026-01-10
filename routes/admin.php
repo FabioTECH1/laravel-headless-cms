@@ -8,7 +8,7 @@ Route::middleware('guest')->group(function () {
     Route::post('login', [LoginController::class, 'store']);
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'force.password.change'])->group(function () {
     Route::get('dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
 
     Route::post('logout', [LoginController::class, 'destroy'])->name('admin.logout');
@@ -32,4 +32,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/settings/password', [\App\Http\Controllers\Admin\SettingsController::class, 'updatePassword'])->name('admin.settings.password.update');
     Route::post('/settings/tokens', [\App\Http\Controllers\Admin\SettingsController::class, 'storeToken'])->name('admin.settings.tokens.store');
     Route::delete('/settings/tokens/{id}', [\App\Http\Controllers\Admin\SettingsController::class, 'destroyToken'])->name('admin.settings.tokens.destroy');
+
+    Route::post('/media', [\App\Http\Controllers\Admin\MediaController::class, 'store'])->name('admin.media.store');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('password/expired', [\App\Http\Controllers\Admin\SettingsController::class, 'expiredPassword'])->name('admin.password.expired');
+    Route::put('password/expired', [\App\Http\Controllers\Admin\SettingsController::class, 'updateExpiredPassword'])->name('admin.password.expired.update');
 });

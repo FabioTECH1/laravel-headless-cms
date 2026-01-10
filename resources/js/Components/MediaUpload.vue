@@ -43,9 +43,25 @@ const upload = async (event: Event) => {
         previewUrl.value = url;
         filename.value = name;
         emit('update:modelValue', id);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Upload failed', error);
-        showError('Upload failed. Please try again.');
+
+        let message = 'Upload failed. Please try again.';
+
+        if (error.response) {
+            if (error.response.status === 422) {
+                // Validation error - show specific message
+                message = error.response.data.message || message;
+            } else if (error.response.status >= 500) {
+                // Server error - hide details from user for security
+                message = 'A server error occurred. Please check the logs.';
+            } else {
+                // Other errors (403, 404, etc) - use message from server or default
+                message = error.response.data?.message || message;
+            }
+        }
+
+        showError(message);
     } finally {
         isUploading.value = false;
         if (fileInput.value) fileInput.value.value = '';

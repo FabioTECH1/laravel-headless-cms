@@ -4,6 +4,7 @@ import * as adminSettings from './routes/admin/settings';
 import * as adminSettingsTokens from './routes/admin/settings/tokens';
 import * as adminSettingsProfile from './routes/admin/settings/profile';
 import * as adminSettingsPassword from './routes/admin/settings/password';
+import * as adminMedia from './routes/admin/media';
 
 export function route(name: string, params?: any): string {
     const routeMap: Record<string, any> = {
@@ -24,6 +25,7 @@ export function route(name: string, params?: any): string {
         'admin.settings.password.update': adminSettingsPassword.update,
         'admin.settings.tokens.store': adminSettingsTokens.store,
         'admin.settings.tokens.destroy': adminSettingsTokens.destroy,
+        'admin.media.store': adminMedia.store,
     };
 
     const routeFn = routeMap[name];

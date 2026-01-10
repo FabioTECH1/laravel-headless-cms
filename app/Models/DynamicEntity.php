@@ -15,19 +15,21 @@ class DynamicEntity extends Model
         return $query->whereNotNull('published_at')->where('published_at', '<=', now());
     }
 
+    protected $contentType;
+
     public function bind(string $slug): self
     {
-        $contentType = ContentType::where('slug', $slug)->with('fields')->first();
+        $this->contentType = ContentType::where('slug', $slug)->with('fields')->first();
 
-        if (! $contentType) {
+        if (! $this->contentType) {
             throw new ModelNotFoundException("Content Type with slug [{$slug}] not found.");
         }
 
         // Logic must match SchemaManager's table naming convention
-        $tableName = Str::plural(Str::snake($contentType->name));
+        $tableName = Str::plural(Str::snake($this->contentType->name));
         $this->setTable($tableName);
 
-        foreach ($contentType->fields as $field) {
+        foreach ($this->contentType->fields as $field) {
             $type = match ($field->type) {
                 'boolean' => 'boolean',
                 'integer' => 'integer',
@@ -45,11 +47,6 @@ class DynamicEntity extends Model
 
     public function resolveRelations()
     {
-        // Simple way to hydrate related models if they are loaded or foreign keys exist.
-        // For MVP, we might rely on naming convention if we want 'post->image' to work.
-        // But for now, let's just facilitate the creation and basic access.
-
-        // Dynamic Relationship Accessor (Magic Method) could go here.
         return $this;
     }
 
@@ -58,9 +55,38 @@ class DynamicEntity extends Model
      */
     public function __call($method, $parameters)
     {
-        // Check if method matches a field name that is a relation/media type
-        // This requires knowing the current schema fields. But we only check slug on bind.
+        if ($this->contentType) {
+            $field = $this->contentType->fields->where('name', $method)->first();
+
+            if ($field && $field->type === 'media') {
+                return $this->belongsTo(MediaFile::class, $method.'_id');
+            }
+        }
 
         return parent::__call($method, $parameters);
+    }
+
+    /**
+     * Create a new instance of the given model.
+     *
+     * @param  array  $attributes
+     * @param  bool  $exists
+     * @return static
+     */
+    public function newInstance($attributes = [], $exists = false)
+    {
+        $model = parent::newInstance($attributes, $exists);
+
+        $model->setTable($this->getTable());
+
+        if (isset($this->contentType)) {
+            $model->contentType = $this->contentType;
+            // Re-apply casts if needed, though bind() logic did it.
+            // Since newInstance doesn't call bind, we might lose casts if not careful.
+            // Let's copy casts too.
+            $model->mergeCasts($this->casts);
+        }
+
+        return $model;
     }
 }
