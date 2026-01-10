@@ -75,6 +75,7 @@ Retrieve a paginated list of content items.
 - **Endpoint:** `GET /content/{slug}`
 - **Parameters:**
   - `page` (optional): Page number for pagination.
+  - `per_page` (optional): Items per page (default: 10, max: 100).
   - `status` (optional): Set to `draft` to view drafts (requires authentication + permissions). Public endpoint defaults to published only.
 - **Response (200 OK):**
   ```json
@@ -88,8 +89,12 @@ Retrieve a paginated list of content items.
         ... // dynamic fields
       }
     ],
-    "links": { ... },
-    "meta": { ... }
+    "pagination": {
+      "current_page": 1,
+      "total_pages": 5,
+      "total_items": 50,
+      "per_page": 10
+    }
   }
   ```
 

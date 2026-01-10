@@ -71,4 +71,37 @@ describe('Content API', function () {
 
         $this->assertDatabaseMissing('tasks', ['id' => $entity->id]);
     });
+
+    it('paginates content correctly', function () {
+        $schemaManager = new SchemaManager;
+        $schemaManager->createType('Post', [
+            ['name' => 'title', 'type' => 'text'],
+        ]);
+
+        \App\Models\ContentType::where('slug', 'post')->update(['is_public' => true]);
+
+        // Create 25 posts
+        for ($i = 1; $i <= 25; $i++) {
+            (new \App\Models\DynamicEntity)->bind('post')->create([
+                'title' => "Post #$i",
+                'published_at' => now(),
+            ]);
+        }
+
+        // Request page 1 with 10 items
+        $response = $this->getJson('/api/content/post?page=1&per_page=10');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('pagination.current_page', 1)
+            ->assertJsonPath('pagination.per_page', 10)
+            ->assertJsonPath('pagination.total_items', 25)
+            ->assertJsonCount(10, 'data');
+
+        // Request page 3 (should have 5 items)
+        $response = $this->getJson('/api/content/post?page=3&per_page=10');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('pagination.current_page', 3)
+            ->assertJsonCount(5, 'data');
+    });
 });

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ContentIndexRequest;
 use App\Http\Requests\ContentRequest;
 use App\Http\Resources\DynamicContentResource;
 use App\Models\ContentType;
@@ -11,8 +12,9 @@ use Illuminate\Http\Request;
 
 class ContentController extends Controller
 {
-    public function index(Request $request, string $slug)
+    public function index(ContentIndexRequest $request, string $slug)
     {
+        $validated = $request->validated();
         $contentType = ContentType::where('slug', $slug)->firstOrFail();
 
         if (! $contentType->is_public && ! auth('sanctum')->check()) {
@@ -23,16 +25,25 @@ class ContentController extends Controller
 
         $query = $entity->newQuery();
 
-        if ($request->query('status') === 'draft') {
+        if (isset($validated['status']) && $validated['status'] === 'draft') {
             // For now, allow viewing drafts if requested (in future, add permission check)
         } else {
             $query->published();
         }
+        $perPage = $validated['per_page'] ?? 10;
+        $query = $query->paginate($perPage);
 
         // Eager load if needed, but for now we rely on lazy loading in Resource or pre-load if we knew fields.
         // DynamicEntity doesn't expose fields easily to query builder without iteration.
-
-        return DynamicContentResource::collection($query->paginate());
+        return response()->json([
+            'data' => DynamicContentResource::collection($query->items())->resolve(),
+            'pagination' => [
+                'current_page' => $query->currentPage(),
+                'total_pages' => $query->lastPage(),
+                'total_items' => $query->total(),
+                'per_page' => $query->perPage(),
+            ],
+        ]);
     }
 
     public function store(ContentRequest $request, string $slug)

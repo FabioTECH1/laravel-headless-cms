@@ -3,6 +3,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { route } from '@/route-helper';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
+import Pagination from '@/Components/Pagination.vue';
 import { ref } from 'vue';
 
 const props = defineProps<{
@@ -168,6 +169,7 @@ const formatValue = (value: any, type: string) => {
                             </div>
                         </div>
                     </div>
+                    <Pagination class="mt-6" :links="items.links" />
                 </div>
             </div>
         </div>
