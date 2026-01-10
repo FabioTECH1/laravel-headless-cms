@@ -3,17 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
-use Tests\TestCase;
 
-class LogoutTest extends TestCase
-{
-    use RefreshDatabase;
-
-    /** @test */
-    public function token_based_logout_deletes_token()
-    {
+describe('Logout', function () {
+    it('deletes token on token-based logout', function () {
         $user = User::factory()->create();
         $token = $user->createToken('test-token')->plainTextToken;
 
@@ -24,11 +17,9 @@ class LogoutTest extends TestCase
 
         $response->assertOk();
         $this->assertCount(0, $user->fresh()->tokens);
-    }
+    });
 
-    /** @test */
-    public function session_based_logout_does_not_crash()
-    {
+    it('does not crash on session-based logout', function () {
         $user = User::factory()->create();
 
         // Simulate session-based auth (SPA)
@@ -38,5 +29,5 @@ class LogoutTest extends TestCase
 
         $response->assertOk();
         // Tokens should remain untouched or irrelevant, but mainly no crash
-    }
-}
+    });
+});

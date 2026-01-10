@@ -3,52 +3,59 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
+describe('Admin Authentication', function () {
+    it('renders the login screen', function () {
+        User::factory()->create();
 
-test('admin login screen can be rendered', function () {
-    $response = $this->get('/admin/login');
+        $response = $this->get('/admin/login');
 
-    $response->assertStatus(200);
-});
+        $response->assertStatus(200);
+    });
 
-test('admins can authenticate using the login screen', function () {
-    $user = User::factory()->create([
-        'is_admin' => true,
-    ]);
+    it('redirects to registration if no users exist', function () {
+        $response = $this->get('/admin/login');
 
-    $response = $this->post('/admin/login', [
-        'email' => $user->email,
-        'password' => 'password',
-    ]);
+        $response->assertRedirect(route('admin.register'));
+    });
 
-    $this->assertAuthenticated();
-    $response->assertRedirect(route('admin.dashboard'));
-});
+    it('allows admins to authenticate', function () {
+        $user = User::factory()->create([
+            'is_admin' => true,
+        ]);
 
-test('users can not authenticate with invalid password', function () {
-    $user = User::factory()->create([
-        'is_admin' => true,
-    ]);
+        $response = $this->post('/admin/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
 
-    $this->post('/admin/login', [
-        'email' => $user->email,
-        'password' => 'wrong-password',
-    ]);
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('admin.dashboard'));
+    });
 
-    $this->assertGuest();
-});
+    it('prevents authentication with invalid password', function () {
+        $user = User::factory()->create([
+            'is_admin' => true,
+        ]);
 
-test('non-admins cannot access admin dashboard', function () {
-    $user = User::factory()->create([
-        'is_admin' => false,
-    ]);
+        $this->post('/admin/login', [
+            'email' => $user->email,
+            'password' => 'wrong-password',
+        ]);
 
-    $response = $this->post('/admin/login', [
-        'email' => $user->email,
-        'password' => 'password',
-    ]);
+        $this->assertGuest();
+    });
 
-    $this->assertGuest();
+    it('prevents non-admins from accessing dashboard', function () {
+        $user = User::factory()->create([
+            'is_admin' => false,
+        ]);
+
+        $response = $this->post('/admin/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+    });
 });

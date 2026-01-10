@@ -5,35 +5,22 @@ namespace Tests\Feature;
 use App\Models\DynamicEntity;
 use App\Models\User;
 use App\Services\SchemaManager;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
-use Tests\TestCase;
 
-class RelationshipTest extends TestCase
-{
-    use RefreshDatabase;
-
-    protected $admin;
-
-    protected $schemaManager;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
+describe('Relationships', function () {
+    beforeEach(function () {
         $this->admin = User::factory()->create(['is_admin' => true]);
         $this->schemaManager = new SchemaManager;
-    }
+    });
 
-    /** @test */
-    public function it_creates_foreign_key_column_in_database()
-    {
+    it('creates foreign key column in database', function () {
         // 1. Create 'Category' Type
         $categoryType = $this->schemaManager->createType('Category', [
             ['name' => 'title', 'type' => 'text'],
         ]);
 
         // 2. Create 'Product' Type with Relation to Category
-        $productType = $this->schemaManager->createType('Product', [
+        $this->schemaManager->createType('Product', [
             ['name' => 'name', 'type' => 'text'],
             [
                 'name' => 'category',
@@ -44,11 +31,9 @@ class RelationshipTest extends TestCase
 
         // Assert column exists
         $this->assertTrue(Schema::hasColumn('products', 'category_id'));
-    }
+    });
 
-    /** @test */
-    public function it_loads_relation_options_in_create_form()
-    {
+    it('loads relation options in create form', function () {
         // 1. Create 'Category' Type
         $categoryType = $this->schemaManager->createType('Category', [
             ['name' => 'title', 'type' => 'text'],
@@ -80,5 +65,5 @@ class RelationshipTest extends TestCase
                 ->where('options.category.0.id', $category->id)
                 ->where('options.category.0.label', 'Tech')
             );
-    }
-}
+    });
+});

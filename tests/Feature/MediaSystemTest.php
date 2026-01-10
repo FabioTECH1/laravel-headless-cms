@@ -4,30 +4,17 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Services\SchemaManager;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Tests\TestCase;
 
-class MediaSystemTest extends TestCase
-{
-    use RefreshDatabase;
-
-    protected $admin;
-
-    protected $schemaManager;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
+describe('Media System', function () {
+    beforeEach(function () {
         $this->admin = User::factory()->create(['is_admin' => true]);
         $this->schemaManager = new SchemaManager;
         Storage::fake('public');
-    }
+    });
 
-    /** @test */
-    public function it_can_upload_a_file()
-    {
+    it('can upload a file', function () {
         $response = $this->actingAs($this->admin)->postJson(route('admin.media.store'), [
             'file' => UploadedFile::fake()->image('photo.jpg'),
         ]);
@@ -38,11 +25,9 @@ class MediaSystemTest extends TestCase
         $this->assertDatabaseHas('media_files', [
             'filename' => 'photo.jpg',
         ]);
-    }
+    });
 
-    /** @test */
-    public function it_can_attach_media_to_content()
-    {
+    it('can attach media to content', function () {
         // 1. Create 'Post' Type with 'hero_image' (media)
         $this->schemaManager->createType('Post', [
             ['name' => 'title', 'type' => 'text'],
@@ -69,5 +54,5 @@ class MediaSystemTest extends TestCase
             'title' => 'My Best Shot',
             'hero_image_id' => $mediaId,
         ]);
-    }
-}
+    });
+});

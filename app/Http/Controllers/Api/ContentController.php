@@ -3,15 +3,21 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ContentRequest;
 use App\Models\ContentType;
 use App\Models\DynamicEntity;
-use App\Services\ContentValidator;
 use Illuminate\Http\Request;
 
 class ContentController extends Controller
 {
     public function index(Request $request, string $slug)
     {
+        $contentType = ContentType::where('slug', $slug)->firstOrFail();
+
+        if (! $contentType->is_public && ! auth('sanctum')->check()) {
+            abort(401, 'Unauthenticated.');
+        }
+
         $entity = (new DynamicEntity)->bind($slug);
 
         $query = $entity->newQuery();
@@ -25,13 +31,12 @@ class ContentController extends Controller
         return response()->json($query->paginate());
     }
 
-    public function store(Request $request, string $slug, ContentValidator $validator)
+    public function store(ContentRequest $request, string $slug)
     {
-        // Need ContentType for validation
-        $contentType = ContentType::where('slug', $slug)->with('fields')->firstOrFail();
+        // Need ContentType for other logic (ownership), but validation is done.
+        $contentType = ContentType::where('slug', $slug)->firstOrFail();
 
-        $rules = $validator->getRules($contentType);
-        $attributes = $request->validate($rules);
+        $attributes = $request->validated();
 
         // Auto-assign user_id if ownership is enabled
         if ($contentType->has_ownership) {
@@ -46,6 +51,12 @@ class ContentController extends Controller
 
     public function show(string $slug, string $id)
     {
+        $contentType = ContentType::where('slug', $slug)->firstOrFail();
+
+        if (! $contentType->is_public && ! auth('sanctum')->check()) {
+            abort(401, 'Unauthenticated.');
+        }
+
         $entity = (new DynamicEntity)->bind($slug);
 
         $item = $entity->findOrFail($id);
@@ -53,7 +64,7 @@ class ContentController extends Controller
         return response()->json($item);
     }
 
-    public function update(Request $request, string $slug, string $id, ContentValidator $validator)
+    public function update(ContentRequest $request, string $slug, string $id)
     {
         $contentType = ContentType::where('slug', $slug)->with('fields')->firstOrFail();
         $entity = (new DynamicEntity)->bind($slug);
@@ -63,8 +74,6 @@ class ContentController extends Controller
         // Enforce ownership if enabled
         if ($contentType->has_ownership) {
             $user = $request->user();
-            // Since route is protected by auth:sanctum, user should be present.
-            // But we check to be safe or satisfy static analysis
             abort_unless($user, 401, 'Authentication required.');
 
             $isOwner = $item->user_id === $user->id;
@@ -73,8 +82,7 @@ class ContentController extends Controller
             abort_unless($isOwner || $isAdmin, 403, 'You do not have permission to update this content.');
         }
 
-        $rules = $validator->getRules($contentType, $id);
-        $attributes = $request->validate($rules);
+        $attributes = $request->validated();
 
         // Prevent changing user_id
         unset($attributes['user_id']);

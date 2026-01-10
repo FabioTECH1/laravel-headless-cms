@@ -5,30 +5,15 @@ namespace Tests\Feature;
 use App\Models\DynamicEntity;
 use App\Models\User;
 use App\Services\SchemaManager;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-class ValidationTest extends TestCase
-{
-    use RefreshDatabase;
-
-    protected $admin;
-
-    protected $schemaManager;
-
-    protected $token;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
+describe('Validation', function () {
+    beforeEach(function () {
         $this->admin = User::factory()->create(['is_admin' => true]);
         $this->schemaManager = new SchemaManager;
         $this->token = $this->admin->createToken('test')->plainTextToken;
-    }
+    });
 
-    /** @test */
-    public function required_fields_trigger_validation_error()
-    {
+    it('triggers error for required fields', function () {
         // 1. Create Type with Required Field
         $this->schemaManager->createType('Product', [
             ['name' => 'sku', 'type' => 'text', 'settings' => ['required' => true]],
@@ -41,11 +26,9 @@ class ValidationTest extends TestCase
         // 3. Assert 422
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['sku']);
-    }
+    });
 
-    /** @test */
-    public function unique_fields_prevent_duplicates()
-    {
+    it('prevents duplicates for unique fields', function () {
         // 1. Create Type with Unique Field
         $this->schemaManager->createType('Product', [
             ['name' => 'sku', 'type' => 'text', 'settings' => ['required' => true, 'unique' => true]],
@@ -62,11 +45,9 @@ class ValidationTest extends TestCase
         // 4. Assert 422
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['sku']);
-    }
+    });
 
-    /** @test */
-    public function unique_fields_allow_updates_to_self()
-    {
+    it('allows self-update for unique fields', function () {
         // 1. Create Type with Unique Field
         $this->schemaManager->createType('Product', [
             ['name' => 'sku', 'type' => 'text', 'settings' => ['required' => true, 'unique' => true]],
@@ -82,5 +63,5 @@ class ValidationTest extends TestCase
 
         // 4. Assert 200 OK
         $response->assertOk();
-    }
-}
+    });
+});

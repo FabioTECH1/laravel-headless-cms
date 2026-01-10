@@ -8,14 +8,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Testing\AssertableInertia as Assert;
-use Tests\TestCase;
 
-class DashboardTest extends TestCase
-{
-    use RefreshDatabase;
+uses(RefreshDatabase::class);
 
-    public function test_admin_can_access_dashboard()
-    {
+describe('Admin Dashboard', function () {
+    it('allows admin access', function () {
         $admin = User::factory()->create(['is_admin' => true]);
 
         $response = $this->actingAs($admin)->get(route('admin.dashboard'));
@@ -25,10 +22,9 @@ class DashboardTest extends TestCase
             ->component('Admin/Dashboard')
             ->has('stats')
         );
-    }
+    });
 
-    public function test_dashboard_shows_correct_stats()
-    {
+    it('shows correct stats', function () {
         $admin = User::factory()->create(['is_admin' => true]);
         User::factory()->count(4)->create(['is_admin' => false]); // Total 5 users
 
@@ -71,5 +67,5 @@ class DashboardTest extends TestCase
              // Note: In controller we check Schema::hasTable. If we didn't create table for products, count is 0.
             ->where('stats.content_breakdown.1.count', 0)
         );
-    }
-}
+    });
+});

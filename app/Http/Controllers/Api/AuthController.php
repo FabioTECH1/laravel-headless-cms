@@ -25,7 +25,7 @@ class AuthController extends Controller
             // this is to block api user reg if there isnt an admin yet
             return response()->json([
                 'message' => 'User Creation is disabled',
-            ], 404);
+            ], 403);
         }
 
         $user = User::create([
@@ -73,7 +73,6 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'is_admin' => $user->is_admin,
             ],
         ]);
     }

@@ -1,20 +1,35 @@
 <?php
 
-namespace App\Services;
+namespace App\Http\Requests;
 
 use App\Models\ContentType;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
-class ContentValidator
+class ContentRequest extends FormRequest
 {
     /**
-     * Generate validation rules for a given Content Type.
-     *
-     * @param  int|null  $ignoreId  ID to ignore for unique checks (during update)
+     * Determine if the user is authorized to make this request.
      */
-    public function getRules(ContentType $contentType, $ignoreId = null): array
+    public function authorize(): bool
     {
+        // Authorization is handled in the controller or via policies for now.
+        // We return true to allow the request to proceed to the validation stage.
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     */
+    public function rules(): array
+    {
+        $slug = $this->route('slug');
+        $id = $this->route('id'); // Will be null for 'store' requests
+
+        // Find the ContentType based on the slug
+        $contentType = ContentType::where('slug', $slug)->with('fields')->firstOrFail();
+
         $rules = [];
 
         foreach ($contentType->fields as $field) {
@@ -60,7 +75,7 @@ class ContentValidator
                     ? $field->name.'_id'
                     : $field->name;
 
-                $rules[$column][] = Rule::unique($tableName, $column)->ignore($ignoreId);
+                $rules[$column][] = Rule::unique($tableName, $column)->ignore($id);
             }
 
             // Assign rules to appropriate key

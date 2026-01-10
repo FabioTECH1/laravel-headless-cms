@@ -1,67 +1,47 @@
 <?php
 
-namespace Tests\Feature;
-
-use App\Models\ContentType;
 use App\Models\User;
 use App\Services\SchemaManager;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-class ApiSecurityTest extends TestCase
-{
-    use RefreshDatabase;
+describe('API Security', function () {
+    it('accessible public content without token', function () {
+        $schemaManager = new SchemaManager;
 
-    protected $schemaManager;
-
-    protected $token;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->schemaManager = new SchemaManager;
-    }
-
-    /** @test */
-    public function public_content_is_accessible_without_token()
-    {
         // 1. Create Public Type
-        $this->schemaManager->createType('PublicPost', [
+        $type = $schemaManager->createType('PublicPost', [
             ['name' => 'title', 'type' => 'text'],
         ]);
-        // Update is_public manually since createType defaults to false usually (or add arg if updated)
-        // Adjust based on current implementation - assumming database default is false.
-        $type = ContentType::where('slug', 'public-post')->first();
+        // Update is_public manually since createType defaults to false usually
         $type->update(['is_public' => true]);
 
         // 2. GET request
-        $response = $this->getJson('/api/content/public-post');
+        $response = $this->getJson('/api/content/'.$type->slug);
 
         // 3. Assert OK
         $response->assertOk();
-    }
+    });
 
-    /** @test */
-    public function private_content_requires_token()
-    {
+    it('requires token for private content', function () {
+        $schemaManager = new SchemaManager;
+
         // 1. Create Private Type
-        $this->schemaManager->createType('SecretDiary', [
+        $type = $schemaManager->createType('SecretDiary', [
             ['name' => 'title', 'type' => 'text'],
         ]);
         // Default is private (false)
 
         // 2. GET request (Unauthenticated)
-        $response = $this->getJson('/api/content/secret-diary');
+        $response = $this->getJson('/api/content/'.$type->slug);
 
         // 3. Assert 401
         $response->assertUnauthorized();
-    }
+    });
 
-    /** @test */
-    public function token_allows_access_to_private_content()
-    {
+    it('allows access to private content with token', function () {
+        $schemaManager = new SchemaManager;
+
         // 1. Create Private Type
-        $this->schemaManager->createType('SecretReport', [
+        $type = $schemaManager->createType('SecretReport', [
             ['name' => 'title', 'type' => 'text'],
         ]);
 
@@ -71,26 +51,25 @@ class ApiSecurityTest extends TestCase
 
         // 3. GET request with Token
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->getJson('/api/content/secret-report');
+            ->getJson('/api/content/'.$type->slug);
 
         // 4. Assert OK
         $response->assertOk();
-    }
+    });
 
-    /** @test */
-    public function writing_content_always_requires_token_even_if_public()
-    {
+    it('always requires token for writing content even if public', function () {
+        $schemaManager = new SchemaManager;
+
         // 1. Create Public Type
-        $this->schemaManager->createType('PublicNote', [
+        $type = $schemaManager->createType('PublicNote', [
             ['name' => 'title', 'type' => 'text'],
         ]);
-        $type = ContentType::where('slug', 'public-note')->first();
         $type->update(['is_public' => true]);
 
         // 2. POST request (Unauthenticated)
-        $response = $this->postJson('/api/content/public-note', ['title' => 'Hacked']);
+        $response = $this->postJson('/api/content/'.$type->slug, ['title' => 'Hacked']);
 
         // 3. Assert 401
         $response->assertUnauthorized();
-    }
-}
+    });
+});

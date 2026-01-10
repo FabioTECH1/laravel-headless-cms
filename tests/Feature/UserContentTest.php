@@ -2,15 +2,15 @@
 
 use App\Models\User;
 use App\Services\SchemaManager;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\postJson;
 
-uses(RefreshDatabase::class);
-
 describe('Public Auth API', function () {
     it('allows user registration', function () {
+
+        User::factory()->create(['is_admin' => true]);
+
         $response = postJson('/api/auth/register', [
             'name' => 'John Doe',
             'email' => 'john@example.com',
@@ -28,6 +28,17 @@ describe('Public Auth API', function () {
             'email' => 'john@example.com',
             'is_admin' => false,
         ]);
+    });
+
+    it('disallow user registration without an admin', function () {
+        $response = postJson('/api/auth/register', [
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertForbidden();
     });
 
     it('validates registration data', function () {
@@ -53,7 +64,7 @@ describe('Public Auth API', function () {
         $response->assertSuccessful()
             ->assertJsonStructure([
                 'token',
-                'user' => ['id', 'name', 'email', 'is_admin'],
+                'user' => ['id', 'name', 'email'],
             ]);
     });
 
