@@ -42,6 +42,16 @@ class ContentController extends Controller
 
         $attributes = $request->validated();
 
+        // Handle status -> published_at mapping
+        if (isset($attributes['status'])) {
+            if ($attributes['status'] === 'published' && empty($attributes['published_at'])) {
+                $attributes['published_at'] = now();
+            } elseif ($attributes['status'] === 'draft') {
+                $attributes['published_at'] = null;
+            }
+            unset($attributes['status']);
+        }
+
         // Auto-assign user_id if ownership is enabled
         if ($contentType->has_ownership) {
             $attributes['user_id'] = $request->user()->id;
@@ -90,6 +100,21 @@ class ContentController extends Controller
         }
 
         $attributes = $request->validated();
+
+        // Handle status -> published_at mapping
+        if (isset($attributes['status'])) {
+            if ($attributes['status'] === 'published') {
+                // Only set published_at if it wasn't already published, or if specifically requested?
+                // Usually "Publish" action sets it to now if null.
+                if (empty($attributes['published_at']) && is_null($item->published_at)) {
+                    $attributes['published_at'] = now();
+                }
+                // If already published, do we keep original date? Yes, typically.
+            } elseif ($attributes['status'] === 'draft') {
+                $attributes['published_at'] = null;
+            }
+            unset($attributes['status']);
+        }
 
         // Prevent changing user_id
         unset($attributes['user_id']);

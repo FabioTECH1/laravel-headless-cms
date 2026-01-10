@@ -90,6 +90,9 @@ class ContentRequest extends FormRequest
         // Always allow published_at
         $rules['published_at'] = ['nullable', 'date'];
 
+        // Allow status field for setting published state
+        $rules['status'] = ['nullable', 'string', 'in:draft,published'];
+
         return $rules;
     }
 }

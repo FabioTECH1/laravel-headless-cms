@@ -79,7 +79,7 @@ const formatValue = (value: any, type: string) => {
                             Edit Schema
                         </Link>
                         <Link :href="route('admin.content.create', contentType.slug)"
-                            class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                            class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                             Create New
                         </Link>
                     </div>
@@ -93,7 +93,7 @@ const formatValue = (value: any, type: string) => {
                                     <thead class="bg-gray-50 dark:bg-gray-700">
                                         <tr>
                                             <th scope="col"
-                                                class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:pl-6">
+                                                class="sticky left-0 z-10 bg-gray-50 dark:bg-gray-700 py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:pl-6">
                                                 ID</th>
                                             <!-- Dynamic field columns -->
                                             <th v-for="field in displayFields" :key="field.name" scope="col"
@@ -106,7 +106,8 @@ const formatValue = (value: any, type: string) => {
                                                 class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200">
                                                 Status
                                             </th>
-                                            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                                            <th scope="col"
+                                                class="sticky right-0 z-10 bg-gray-50 dark:bg-gray-700 py-3.5 pl-3 pr-4 sm:pr-6">
                                                 <span class="sr-only">Actions</span>
                                             </th>
                                         </tr>
@@ -121,11 +122,12 @@ const formatValue = (value: any, type: string) => {
                                         </tr>
                                         <tr v-for="item in items.data" :key="item.id">
                                             <td
-                                                class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-6">
+                                                class="sticky left-0 z-10 bg-white dark:bg-gray-800 whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-6">
                                                 {{ item.id }}</td>
                                             <!-- Dynamic field values -->
                                             <td v-for="field in displayFields" :key="field.name"
-                                                class="px-3 py-4 text-sm text-gray-900 dark:text-gray-300 max-w-xs truncate">
+                                                class="px-3 py-4 text-sm text-gray-900 dark:text-gray-300 max-w-[12rem] truncate"
+                                                :title="typeof item[field.name] === 'string' ? item[field.name].replace(/<[^>]*>?/gm, '') : ''">
                                                 <template v-if="field.type === 'media' && item[field.name]">
                                                     <a :href="item[field.name].url" target="_blank"
                                                         class="block h-10 w-10 relative">
@@ -152,7 +154,7 @@ const formatValue = (value: any, type: string) => {
                                                 </span>
                                             </td>
                                             <td
-                                                class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                                class="sticky right-0 z-10 bg-white dark:bg-gray-800 whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                                                 <Link
                                                     :href="route('admin.content.edit', { slug: contentType.slug, id: item.id })"
                                                     class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-4">
