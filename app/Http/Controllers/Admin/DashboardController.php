@@ -15,9 +15,10 @@ class DashboardController extends Controller
     public function index()
     {
         $contentStats = ContentType::all()->map(function ($type) {
+            $tableName = \Illuminate\Support\Str::plural(\Illuminate\Support\Str::snake($type->name));
             $count = 0;
-            if (Schema::hasTable($type->slug)) {
-                $count = DB::table($type->slug)->count();
+            if (Schema::hasTable($tableName)) {
+                $count = DB::table($tableName)->count();
             }
 
             return [

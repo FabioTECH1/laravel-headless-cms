@@ -42,6 +42,12 @@ const profileForm = useForm({
 const updateProfile = () => {
     profileForm.put(route('admin.settings.profile.update'), {
         preserveScroll: true,
+        onSuccess: () => {
+            toast.success('Profile updated successfully');
+        },
+        onError: () => {
+            toast.error('Please check the form for errors.');
+        },
     });
 };
 
@@ -55,7 +61,14 @@ const passwordForm = useForm({
 const updatePassword = () => {
     passwordForm.put(route('admin.settings.password.update'), {
         preserveScroll: true,
-        onSuccess: () => passwordForm.reset(),
+        onSuccess: () => {
+            passwordForm.reset();
+            toast.success('Password updated successfully');
+        },
+        onError: () => {
+            passwordForm.reset('password', 'password_confirmation');
+            toast.error('Failed to update password. Please try again.');
+        },
     });
 };
 

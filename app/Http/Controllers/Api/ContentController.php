@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ContentRequest;
+use App\Http\Resources\DynamicContentResource;
 use App\Models\ContentType;
 use App\Models\DynamicEntity;
 use Illuminate\Http\Request;
@@ -28,7 +29,10 @@ class ContentController extends Controller
             $query->published();
         }
 
-        return response()->json($query->paginate());
+        // Eager load if needed, but for now we rely on lazy loading in Resource or pre-load if we knew fields.
+        // DynamicEntity doesn't expose fields easily to query builder without iteration.
+
+        return DynamicContentResource::collection($query->paginate());
     }
 
     public function store(ContentRequest $request, string $slug)
@@ -44,9 +48,12 @@ class ContentController extends Controller
         }
 
         $entity = (new DynamicEntity)->bind($slug);
+
         $item = $entity->create($attributes);
 
-        return response()->json($item, 201);
+        return (new DynamicContentResource($item))
+            ->response($request)
+            ->setStatusCode(201);
     }
 
     public function show(string $slug, string $id)
@@ -61,7 +68,7 @@ class ContentController extends Controller
 
         $item = $entity->findOrFail($id);
 
-        return response()->json($item);
+        return new DynamicContentResource($item);
     }
 
     public function update(ContentRequest $request, string $slug, string $id)
@@ -89,7 +96,7 @@ class ContentController extends Controller
 
         $item->update($attributes);
 
-        return response()->json($item);
+        return new DynamicContentResource($item);
     }
 
     public function destroy(Request $request, string $slug, string $id)

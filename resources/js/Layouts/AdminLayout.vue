@@ -63,7 +63,7 @@ import ToastContainer from '@/Components/ToastContainer.vue';
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 overflow-auto p-6">
+            <main class="flex-1 overflow-auto">
                 <slot />
             </main>
         </div>

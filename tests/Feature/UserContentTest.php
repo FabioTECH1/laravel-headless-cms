@@ -150,7 +150,7 @@ describe('Content Ownership', function () {
             'content' => 'Private thoughts',
         ]);
 
-        $diaryId = $response->json('id');
+        $diaryId = $response->json('data.id');
 
         // User B tries to edit
         $this->actingAs($userB, 'sanctum')->putJson("/api/content/diaries/{$diaryId}", [
@@ -168,7 +168,7 @@ describe('Content Ownership', function () {
             'content' => 'Private thoughts',
         ]);
 
-        $diaryId = $response->json('id');
+        $diaryId = $response->json('data.id');
 
         // User B tries to delete
         $this->actingAs($userB, 'sanctum')->deleteJson("/api/content/diaries/{$diaryId}")
@@ -185,7 +185,7 @@ describe('Content Ownership', function () {
             'content' => 'Content',
         ]);
 
-        $diaryId = $response->json('id');
+        $diaryId = $response->json('data.id');
 
         // Admin edits it
         $this->actingAs($admin, 'sanctum')->putJson("/api/content/diaries/{$diaryId}", [
@@ -208,7 +208,7 @@ describe('Content Ownership', function () {
             'content' => 'Content',
         ]);
 
-        $diaryId = $response->json('id');
+        $diaryId = $response->json('data.id');
 
         // Admin deletes it
         $this->actingAs($admin, 'sanctum')->deleteJson("/api/content/diaries/{$diaryId}")
@@ -224,7 +224,7 @@ describe('Content Ownership', function () {
             'content' => 'Original Content',
         ]);
 
-        $diaryId = $response->json('id');
+        $diaryId = $response->json('data.id');
 
         // Update
         $this->actingAs($user, 'sanctum')->putJson("/api/content/diaries/{$diaryId}", [

@@ -24,7 +24,7 @@ describe('Content API', function () {
         $response = $this->getJson('/api/content/task');
 
         $response->assertStatus(200)
-            ->assertJsonFragment(['title' => 'Test Task']);
+            ->assertJsonPath('data.0.title', 'Test Task');
     });
 
     it('creates content', function () {
@@ -42,6 +42,8 @@ describe('Content API', function () {
         $response->assertStatus(201);
 
         $this->assertDatabaseHas('tasks', ['title' => 'New Task']);
+
+        $response->assertJsonPath('data.title', 'New Task');
     });
 
     it('returns 404 for unknown content types', function () {
