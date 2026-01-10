@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Auth\LoginController;
+use App\Http\Controllers\Admin\Auth\RegisterController;
 use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MediaController;
@@ -13,7 +14,11 @@ Route::middleware('guest')->group(function () {
     Route::post('login', [LoginController::class, 'store']);
 });
 
-Route::middleware(['auth', 'force.password.change'])->group(function () {
+// First-time setup registration routes, now without 'guest' middleware
+Route::get('register', [RegisterController::class, 'create'])->name('admin.register');
+Route::post('register', [RegisterController::class, 'store'])->name('admin.register.store');
+
+Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
     Route::post('logout', [LoginController::class, 'destroy'])->name('admin.logout');
@@ -43,10 +48,4 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
 
     // Media
     Route::post('/media', [MediaController::class, 'store'])->name('admin.media.store');
-});
-
-Route::middleware('auth')->group(function () {
-    // Force Password Change Routes
-    Route::get('password/expired', [SettingsController::class, 'expiredPassword'])->name('admin.password.expired');
-    Route::put('password/expired', [SettingsController::class, 'updateExpiredPassword'])->name('admin.password.expired.update');
 });

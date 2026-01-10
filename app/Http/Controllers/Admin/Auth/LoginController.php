@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -11,6 +12,10 @@ class LoginController extends Controller
 {
     public function create()
     {
+        if (! User::exists()) {
+            return redirect()->route('admin.register');
+        }
+
         return Inertia::render('Auth/Login');
     }
 

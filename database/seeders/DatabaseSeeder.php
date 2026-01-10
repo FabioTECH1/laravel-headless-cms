@@ -13,13 +13,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('password'), // Ensure password is set if not default
-            'is_admin' => true,
-        ]);
-
+        // No default user creation. The first user to register via /admin/register becomes the admin.
         $this->call([
             ContentTypeSeeder::class,
         ]);

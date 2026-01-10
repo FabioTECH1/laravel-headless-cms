@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Middleware\ForcePasswordChange;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -24,10 +23,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
-        ]);
-
-        $middleware->alias([
-            'force.password.change' => ForcePasswordChange::class,
         ]);
 
         $middleware->redirectGuestsTo(fn () => route('admin.login'));

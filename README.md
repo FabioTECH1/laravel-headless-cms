@@ -65,9 +65,20 @@ This project provides a robust backend for managing dynamic content schemas and 
     Running migrations will set up the core tables (users, personal_access_tokens, etc.) and any existing core schemas.
     ```bash
     touch database/database.sqlite
-    php artisan migrate:fresh --seed
+    php artisan migrate
+    ```
 
-6.  **Run Development Server**
+6.  **Create Admin Account**
+    Visit `http://localhost:8000/admin/register` to create your first admin account.
+    *Note: This route is only available if no users exist in the system.*
+
+7.  **Optional: Seed Demo Content**
+    Populate the database with a full demo structure (Categories, Authors, Blog Posts) to verify functionality:
+    ```bash
+    php artisan db:seed
+    ```
+
+8.  **Run Development Server**
     Start the Laravel development server and Vite build process:
     ```bash
     composer run dev
@@ -84,9 +95,8 @@ This project provides a robust backend for managing dynamic content schemas and 
 
 Access the admin panel at: `http://localhost:8000/admin/login`
 
-**Default Login Credentials:**
-- **Email:** `admin@admin.com`
-- **Password:** `password`
+**Initial Setup:**
+On your first visit, go to `/admin/register` to create your administrator account. Subsequent registrations are disabled.
 
 ### Features:
 

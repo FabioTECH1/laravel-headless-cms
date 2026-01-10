@@ -21,6 +21,13 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
+        if (! User::where('is_admin', true)->exists()) {
+            // this is to block api user reg if there isnt an admin yet
+            return response()->json([
+                'message' => 'User Creation is disabled',
+            ], 404);
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
