@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ContentType;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -45,7 +46,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'contentTypes' => \App\Models\ContentType::select('id', 'name', 'slug')->get(),
+            'contentTypes' => ContentType::select('id', 'name', 'slug')->get(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

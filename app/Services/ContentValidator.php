@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ContentType;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ContentValidator
@@ -52,7 +53,7 @@ class ContentValidator
 
             // 3. Unique validation
             if (! empty($field->settings['unique'])) {
-                $tableName = \Illuminate\Support\Str::plural(\Illuminate\Support\Str::snake($contentType->name));
+                $tableName = Str::plural(Str::snake($contentType->name));
 
                 // If it's a relation/media, the column is 'field_id'
                 $column = in_array($field->type, ['relation', 'media'])

@@ -13,7 +13,7 @@ class SchemaController extends Controller
     public function index()
     {
         return Inertia::render('Schema/Index', [
-            'types' => \App\Models\ContentType::latest()->get(),
+            'types' => ContentType::latest()->get(),
         ]);
     }
 
@@ -32,7 +32,8 @@ class SchemaController extends Controller
             'has_ownership' => ['boolean'],
             'fields' => ['required', 'array', 'min:1'],
             'fields.*.name' => ['required', 'string', 'alpha_dash'],
-            'fields.*.type' => ['required', 'in:text,longtext,integer,boolean,datetime'],
+            'fields.*.type' => ['required', 'in:text,longtext,integer,boolean,datetime,media,relation'],
+            'fields.*.settings.related_content_type_id' => ['required_if:fields.*.type,relation', 'nullable', 'exists:content_types,id'],
         ]);
 
         try {
@@ -55,6 +56,7 @@ class SchemaController extends Controller
 
         return Inertia::render('Schema/Edit', [
             'contentType' => $contentType,
+            'existingTypes' => ContentType::select('id', 'name')->get(),
         ]);
     }
 
@@ -65,7 +67,8 @@ class SchemaController extends Controller
             'has_ownership' => ['boolean'],
             'fields' => ['array'],
             'fields.*.name' => ['required', 'string', 'alpha_dash'],
-            'fields.*.type' => ['required', 'in:text,longtext,integer,boolean,datetime'],
+            'fields.*.type' => ['required', 'in:text,longtext,integer,boolean,datetime,media,relation'],
+            'fields.*.settings.related_content_type_id' => ['required_if:fields.*.type,relation', 'nullable', 'exists:content_types,id'],
         ]);
 
         try {

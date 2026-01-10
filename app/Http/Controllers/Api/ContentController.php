@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ContentType;
 use App\Models\DynamicEntity;
+use App\Services\ContentValidator;
 use Illuminate\Http\Request;
 
 class ContentController extends Controller
@@ -23,10 +25,10 @@ class ContentController extends Controller
         return response()->json($query->paginate());
     }
 
-    public function store(Request $request, string $slug, \App\Services\ContentValidator $validator)
+    public function store(Request $request, string $slug, ContentValidator $validator)
     {
         // Need ContentType for validation
-        $contentType = \App\Models\ContentType::where('slug', $slug)->with('fields')->firstOrFail();
+        $contentType = ContentType::where('slug', $slug)->with('fields')->firstOrFail();
 
         $rules = $validator->getRules($contentType);
         $attributes = $request->validate($rules);
@@ -51,9 +53,9 @@ class ContentController extends Controller
         return response()->json($item);
     }
 
-    public function update(Request $request, string $slug, string $id, \App\Services\ContentValidator $validator)
+    public function update(Request $request, string $slug, string $id, ContentValidator $validator)
     {
-        $contentType = \App\Models\ContentType::where('slug', $slug)->with('fields')->firstOrFail();
+        $contentType = ContentType::where('slug', $slug)->with('fields')->firstOrFail();
         $entity = (new DynamicEntity)->bind($slug);
 
         $item = $entity->findOrFail($id);
@@ -84,7 +86,7 @@ class ContentController extends Controller
 
     public function destroy(Request $request, string $slug, string $id)
     {
-        $contentType = \App\Models\ContentType::where('slug', $slug)->firstOrFail();
+        $contentType = ContentType::where('slug', $slug)->firstOrFail();
         $entity = (new DynamicEntity)->bind($slug);
 
         $item = $entity->findOrFail($id);

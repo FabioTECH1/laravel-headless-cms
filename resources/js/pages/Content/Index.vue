@@ -73,7 +73,11 @@ const formatValue = (value: any, type: string) => {
                     <div class="sm:flex-auto">
                         <h1 class="text-xl font-semibold text-gray-900 dark:text-white">{{ contentType.name }}</h1>
                     </div>
-                    <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+                    <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none flex gap-3">
+                        <Link :href="route('admin.schema.edit', contentType.slug)"
+                            class="block rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:hover:bg-gray-600">
+                            Edit Schema
+                        </Link>
                         <Link :href="route('admin.content.create', contentType.slug)"
                             class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                             Create New

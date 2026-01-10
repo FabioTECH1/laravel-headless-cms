@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 
 const props = defineProps<{
-    modelValue?: string | number;
+    modelValue?: string | number | null;
     placeholder?: string;
     required?: boolean;
     disabled?: boolean;
@@ -13,7 +13,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-    'update:modelValue': [value: string | number];
+    'update:modelValue': [value: string | number | null];
 }>();
 
 const inputId = computed(() => props.id || `select-${Math.random().toString(36).substr(2, 9)}`);

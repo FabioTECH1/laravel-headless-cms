@@ -3,24 +3,26 @@
 namespace App\Services;
 
 use App\Models\ContentType;
+use Exception;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class SchemaManager
 {
     public function createType(string $name, array $fields, bool $isPublic = false, bool $hasOwnership = false): ContentType
     {
         if (! ctype_alnum(str_replace(' ', '', $name))) {
-            throw new \InvalidArgumentException('Content Type name must be alphanumeric.');
+            throw new InvalidArgumentException('Content Type name must be alphanumeric.');
         }
 
         $slug = Str::slug($name);
         $tableName = Str::plural(Str::snake($name));
 
         if (Schema::hasTable($tableName)) {
-            throw new \Exception("Table {$tableName} already exists.");
+            throw new Exception("Table {$tableName} already exists.");
         }
 
         return DB::transaction(function () use ($name, $slug, $tableName, $fields, $isPublic, $hasOwnership) {
@@ -118,7 +120,7 @@ class SchemaManager
             'datetime' => $table->dateTime($name),
             'relation' => $table->unsignedBigInteger($name.'_id')->nullable()->index(),
             'media' => $table->unsignedBigInteger($name.'_id')->nullable()->index(),
-            default => throw new \InvalidArgumentException("Unsupported field type: {$type}"),
+            default => throw new InvalidArgumentException("Unsupported field type: {$type}"),
         };
     }
 

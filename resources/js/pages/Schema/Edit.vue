@@ -16,15 +16,16 @@ const props = defineProps<{
             id: number;
             name: string;
             type: string;
-            settings: { required: boolean; unique: boolean };
+            settings: { required: boolean; unique: boolean; related_content_type_id?: number | null };
         }>;
     };
+    existingTypes: Array<{ id: number; name: string }>;
 }>();
 
 const form = useForm({
     is_public: props.contentType.is_public,
     has_ownership: props.contentType.has_ownership,
-    fields: [] as Array<{ name: string; type: string; settings: { required: boolean; unique: boolean } }>
+    fields: [] as Array<{ name: string; type: string; settings: { required: boolean; unique: boolean; related_content_type_id?: number | null } }>
 });
 
 const fieldTypeOptions = [
@@ -34,10 +35,11 @@ const fieldTypeOptions = [
     { value: 'boolean', label: 'Boolean' },
     { value: 'datetime', label: 'Datetime' },
     { value: 'media', label: 'Media' },
+    { value: 'relation', label: 'Relation' },
 ];
 
 const addField = () => {
-    form.fields.push({ name: '', type: 'text', settings: { required: false, unique: false } });
+    form.fields.push({ name: '', type: 'text', settings: { required: false, unique: false, related_content_type_id: null } });
 };
 
 const removeField = (index: number) => {
@@ -102,11 +104,16 @@ const submit = () => {
                                     class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                                     <div class="flex-1">
                                         <span class="text-sm font-medium text-gray-900 dark:text-gray-200">{{ field.name
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400">
                                         {{fieldTypeOptions.find(opt => opt.value === field.type)?.label || field.type
                                         }}
+                                        <span v-if="field.type === 'relation' && field.settings.related_content_type_id"
+                                            class="ml-1 text-xs text-gray-400">
+                                            (-> {{existingTypes.find(t => t.id ===
+                                                field.settings.related_content_type_id)?.name || 'Unknown' }})
+                                        </span>
                                     </div>
                                     <div class="flex gap-2 text-xs text-gray-500">
                                         <span v-if="field.settings.required"
@@ -146,6 +153,16 @@ const submit = () => {
                                                     d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                                             </svg>
                                         </button>
+                                    </div>
+
+                                    <!-- Relation Settings -->
+                                    <div v-if="field.type === 'relation'" class="mb-3 pl-1 w-1/3">
+                                        <label
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Related
+                                            Content Type</label>
+                                        <Select v-model="field.settings.related_content_type_id"
+                                            :options="existingTypes.map(t => ({ value: t.id, label: t.name }))"
+                                            placeholder="Select Type..." />
                                     </div>
 
                                     <!-- Field Settings -->
