@@ -28,3 +28,4 @@ yarn-error.log
 /.specs
 /GEMINI.md
 /database/database.sqlite
+/laravel-cms.json

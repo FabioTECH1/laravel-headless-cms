@@ -29,6 +29,14 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $user = Auth::user();
 
+            if ($user->suspended_at) {
+                Auth::logout();
+
+                return back()->withErrors([
+                    'email' => 'Your account has been suspended.',
+                ]);
+            }
+
             if (! $user->is_admin) {
                 Auth::logout();
 

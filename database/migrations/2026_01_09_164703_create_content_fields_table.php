@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('content_fields', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('content_type_id')->constrained()->cascadeOnDelete();
+            $table->ulid('id')->primary();
+            $table->foreignUlid('content_type_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('type');
             $table->json('settings')->nullable();

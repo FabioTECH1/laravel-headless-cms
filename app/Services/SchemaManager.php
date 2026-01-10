@@ -42,11 +42,11 @@ class SchemaManager
             }
 
             Schema::create($tableName, function (Blueprint $table) use ($fields, $hasOwnership) {
-                $table->id();
+                $table->ulid('id')->primary();
 
                 // Add user_id foreign key if ownership is enabled
                 if ($hasOwnership) {
-                    $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+                    $table->foreignUlid('user_id')->nullable()->constrained()->onDelete('cascade');
                     $table->index('user_id');
                 }
 
@@ -82,7 +82,7 @@ class SchemaManager
             // Add user_id column if ownership is being enabled
             if ($hasOwnership && ! $wasOwned) {
                 Schema::table($tableName, function (Blueprint $table) {
-                    $table->foreignId('user_id')->nullable()->after('id')->constrained()->onDelete('cascade');
+                    $table->foreignUlid('user_id')->nullable()->after('id')->constrained()->onDelete('cascade');
                     $table->index('user_id');
                 });
             }
@@ -112,16 +112,25 @@ class SchemaManager
         $name = $fieldData['name'];
         $type = $fieldData['type'];
 
-        match ($type) {
+        $column = match ($type) {
             'text' => $table->string($name),
             'longtext' => $table->text($name),
             'integer' => $table->integer($name),
             'boolean' => $table->boolean($name),
             'datetime' => $table->dateTime($name),
-            'relation' => $table->unsignedBigInteger($name.'_id')->nullable()->index(),
-            'media' => $table->unsignedBigInteger($name.'_id')->nullable()->index(),
+            'relation' => $table->ulid($name.'_id')->nullable()->index(),
+            'media' => $table->ulid($name.'_id')->nullable()->index(),
             default => throw new InvalidArgumentException("Unsupported field type: {$type}"),
         };
+
+        // Relations and media are already nullable by default above, so we skip them.
+        if (! in_array($type, ['relation', 'media'])) {
+            $isRequired = $fieldData['settings']['required'] ?? false;
+
+            if (! $isRequired) {
+                $column->nullable();
+            }
+        }
     }
 
     public function deleteType(string $slug): void

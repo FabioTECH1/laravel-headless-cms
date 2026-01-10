@@ -176,7 +176,7 @@ class ContentTypeSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => now(),
                     'published_at' => now(),
-                    'user_id' => 1, // Assuming user ID 1 exists (admin)
+                    'user_id' => \App\Models\User::first()->id ?? \App\Models\User::factory()->create()->id,
                 ]);
             }
             $this->command->info('Seeded Blog Posts.');

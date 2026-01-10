@@ -37,6 +37,12 @@ import ToastContainer from '@/Components/ToastContainer.vue';
                     </p>
                 </div>
 
+                <Link :href="route('admin.users.index')"
+                    class="flex items-center px-2 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                    :class="{ 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white': $page.url.startsWith('/admin/users') }">
+                    Users
+                </Link>
+
                 <Link href="/admin/schema"
                     class="flex items-center px-2 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 group"
                     :class="{ 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white': $page.url === '/admin/schema' || $page.url === '/admin/schema/create' }">

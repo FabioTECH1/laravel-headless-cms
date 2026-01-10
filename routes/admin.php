@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\SchemaController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -45,6 +46,11 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('admin.settings.password.update');
     Route::post('/settings/tokens', [SettingsController::class, 'storeToken'])->name('admin.settings.tokens.store');
     Route::delete('/settings/tokens/{id}', [SettingsController::class, 'destroyToken'])->name('admin.settings.tokens.destroy');
+
+    // User Management
+    Route::resource('users', UserController::class)->names('admin.users')->except(['show', 'create', 'edit']);
+    Route::put('users/{user}/suspend', [UserController::class, 'suspend'])->name('admin.users.suspend');
+    Route::put('users/{user}/unsuspend', [UserController::class, 'unsuspend'])->name('admin.users.unsuspend');
 
     // Media
     Route::post('/media', [MediaController::class, 'store'])->name('admin.media.store');
