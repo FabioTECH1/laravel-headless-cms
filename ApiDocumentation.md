@@ -98,6 +98,38 @@ Retrieve a paginated list of content items.
   }
   ```
 
+
+### 1.1 Advanced Querying
+
+The API supports powerful querying capabilities compatible with Strapi syntax.
+
+#### Filtering
+Filter by fields using operators: `$eq`, `$ne`, `$lt`, `$lte`, `$gt`, `$gte`, `$contains`, `$notContains`, `$in`, `$notIn`, `$null`, `$notNull`.
+
+- Syntax: `filters[field][operator]=value`
+- Example: `GET /api/content/posts?filters[category][$eq]=tech`
+- Example (Complex): `GET /api/content/posts?filters[views][$gt]=100&filters[title][$contains]=Vue`
+
+#### Sorting
+Sort results by one or multiple fields.
+
+- Syntax: `sort=field:direction` or `sort[0]=field:desc`
+- Example: `GET /api/content/posts?sort=published_at:desc`
+- Example (Multiple): `GET /api/content/posts?sort[0]=views:desc&sort[1]=title:asc`
+
+#### Field Selection (Sparse Fieldsets)
+Retrieve only specific fields to optimize payload size.
+
+- Syntax: `fields[0]=field_name`
+- Example: `GET /api/content/posts?fields[0]=title&fields[1]=slug`
+
+#### Population
+Eager load relationships.
+
+- Syntax: `populate[0]=relation_name`
+- Example: `GET /api/content/posts?populate[0]=author`
+
+
 ### 2. Get Single Content
 Retrieve a specific content item by its ID.
 

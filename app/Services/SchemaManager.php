@@ -12,7 +12,7 @@ use InvalidArgumentException;
 
 class SchemaManager
 {
-    public function createType(string $name, array $fields, bool $isPublic = false, bool $hasOwnership = false): ContentType
+    public function createType(string $name, array $fields, bool $isPublic = false, bool $hasOwnership = false, bool $isComponent = false, bool $isSingle = false, bool $isLocalized = false): ContentType
     {
         if (! ctype_alnum(str_replace(' ', '', $name))) {
             throw new InvalidArgumentException('Content Type name must be alphanumeric.');
@@ -21,16 +21,19 @@ class SchemaManager
         $slug = Str::slug($name);
         $tableName = Str::plural(Str::snake($name));
 
-        if (Schema::hasTable($tableName)) {
+        if (! $isComponent && Schema::hasTable($tableName)) {
             throw new Exception("Table {$tableName} already exists.");
         }
 
-        return DB::transaction(function () use ($name, $slug, $tableName, $fields, $isPublic, $hasOwnership) {
+        return DB::transaction(function () use ($name, $slug, $tableName, $fields, $isPublic, $hasOwnership, $isComponent, $isSingle, $isLocalized) {
             $contentType = ContentType::create([
                 'name' => $name,
                 'slug' => $slug,
                 'has_ownership' => $hasOwnership,
                 'is_public' => $isPublic,
+                'is_component' => $isComponent,
+                'is_single' => $isSingle,
+                'is_localized' => $isLocalized,
             ]);
 
             foreach ($fields as $fieldData) {
@@ -41,7 +44,11 @@ class SchemaManager
                 ]);
             }
 
-            Schema::create($tableName, function (Blueprint $table) use ($fields, $hasOwnership) {
+            if ($isComponent) {
+                return $contentType;
+            }
+
+            Schema::create($tableName, function (Blueprint $table) use ($fields, $hasOwnership, $isLocalized) {
                 $table->ulid('id')->primary();
 
                 // Add user_id foreign key if ownership is enabled
@@ -50,7 +57,15 @@ class SchemaManager
                     $table->index('user_id');
                 }
 
+                // Add locale column if localized
+                if ($isLocalized) {
+                    $table->string('locale')->index()->default('en');
+                }
+
                 foreach ($fields as $fieldData) {
+                    if (($fieldData['type'] === 'relation') && ($fieldData['settings']['multiple'] ?? false)) {
+                        continue; // Skip adding column to main table
+                    }
                     $this->addColumn($table, $fieldData);
                 }
 
@@ -59,24 +74,33 @@ class SchemaManager
                 $table->timestamp('published_at')->nullable();
             });
 
+            // Create Pivot Tables for Many-to-Many
+            foreach ($fields as $fieldData) {
+                if (($fieldData['type'] === 'relation') && ($fieldData['settings']['multiple'] ?? false)) {
+                    $this->ensurePivotTable($slug, $fieldData);
+                }
+            }
+
             return $contentType;
         });
     }
 
-    public function updateType(string $slug, array $newFields, bool $isPublic, bool $hasOwnership): void
+    public function updateType(string $slug, array $newFields, bool $isPublic, bool $hasOwnership, bool $isComponent = false, bool $isSingle = false, bool $isLocalized = false): void
     {
         $contentType = ContentType::where('slug', $slug)->firstOrFail();
-        // Recalculate table name from original name or just use slug convention?
-        // Since we store name in DB, we can use it.
         $tableName = Str::plural(Str::snake($contentType->name));
 
-        DB::transaction(function () use ($contentType, $tableName, $newFields, $isPublic, $hasOwnership) {
+        DB::transaction(function () use ($contentType, $tableName, $newFields, $isPublic, $hasOwnership, $isComponent, $isSingle, $isLocalized) {
             $wasOwned = $contentType->has_ownership;
+            $wasLocalized = $contentType->is_localized;
 
             // Update content type settings
             $contentType->update([
                 'is_public' => $isPublic,
                 'has_ownership' => $hasOwnership,
+                'is_component' => $isComponent,
+                'is_single' => $isSingle,
+                'is_localized' => $isLocalized,
             ]);
 
             // Add user_id column if ownership is being enabled
@@ -84,6 +108,13 @@ class SchemaManager
                 Schema::table($tableName, function (Blueprint $table) {
                     $table->foreignUlid('user_id')->nullable()->after('id')->constrained()->onDelete('cascade');
                     $table->index('user_id');
+                });
+            }
+
+            // Add locale column if localization is being enabled
+            if ($isLocalized && ! $wasLocalized) {
+                Schema::table($tableName, function (Blueprint $table) {
+                    $table->string('locale')->index()->default('en')->after('id');
                 });
             }
 
@@ -100,9 +131,19 @@ class SchemaManager
             if (count($newFields) > 0) {
                 Schema::table($tableName, function (Blueprint $table) use ($newFields) {
                     foreach ($newFields as $fieldData) {
+                        if (($fieldData['type'] === 'relation') && ($fieldData['settings']['multiple'] ?? false)) {
+                            continue;
+                        }
                         $this->addColumn($table, $fieldData);
                     }
                 });
+
+                // Handle M2M pivot tables for new fields
+                foreach ($newFields as $fieldData) {
+                    if (($fieldData['type'] === 'relation') && ($fieldData['settings']['multiple'] ?? false)) {
+                        $this->ensurePivotTable($contentType->slug, $fieldData);
+                    }
+                }
             }
         });
     }
@@ -120,6 +161,9 @@ class SchemaManager
             'datetime' => $table->dateTime($name),
             'relation' => $table->ulid($name.'_id')->nullable()->index(),
             'media' => $table->ulid($name.'_id')->nullable()->index(),
+            'json', 'component', 'dynamic_zone' => $table->json($name),
+            'enum' => $table->string($name),
+            'email' => $table->string($name),
             default => throw new InvalidArgumentException("Unsupported field type: {$type}"),
         };
 
@@ -141,6 +185,33 @@ class SchemaManager
         DB::transaction(function () use ($contentType, $tableName) {
             $contentType->delete();
             Schema::dropIfExists($tableName);
+        });
+    }
+
+    protected function ensurePivotTable(string $parentSlug, array $fieldData): void
+    {
+        $relatedTypeId = $fieldData['settings']['related_content_type_id'];
+        $relatedType = ContentType::find($relatedTypeId);
+
+        if (! $relatedType) {
+            return;
+        }
+
+        // Convention: alphabetical order of singular slugs
+        $slugs = [Str::singular($parentSlug), Str::singular($relatedType->slug)];
+        sort($slugs);
+        $pivotTableName = implode('_', $slugs);
+
+        if (Schema::hasTable($pivotTableName)) {
+            return;
+        }
+
+        Schema::create($pivotTableName, function (Blueprint $table) use ($slugs) {
+            $table->ulid($slugs[0].'_id')->index();
+            $table->ulid($slugs[1].'_id')->index();
+            $table->timestamps();
+
+            $table->unique([$slugs[0].'_id', $slugs[1].'_id']);
         });
     }
 }

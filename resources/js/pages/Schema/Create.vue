@@ -4,18 +4,29 @@ import Input from '@/Components/Input.vue';
 import Select from '@/Components/Select.vue';
 import { useForm, Head } from '@inertiajs/vue3';
 import { route } from '@/route-helper';
+import { computed } from 'vue';
 
 const props = defineProps<{
-    existingTypes: Array<{ id: number; name: string }>;
+    existingTypes: Array<{ id: number; name: string; is_component: boolean }>;
+    isComponent?: boolean;
 }>();
 
 const form = useForm({
     name: '',
     is_public: false,
     has_ownership: false,
+    is_component: props.isComponent ?? false,
+    is_single: false,
+    is_localized: false,
     fields: [
-        { name: '', type: 'text', settings: { required: false, unique: false, related_content_type_id: null } }
+        { name: '', type: 'text', settings: { required: false, unique: false, related_content_type_id: null, allowed_component_ids: [] as number[], options: [] as string[], multiple: false } }
     ]
+});
+
+const pageTitle = computed(() => {
+    if (form.is_component) return 'Create Component';
+    if (form.is_single) return 'Create Single Type';
+    return 'Create Content Type';
 });
 
 const fieldTypeOptions = [
@@ -26,10 +37,15 @@ const fieldTypeOptions = [
     { value: 'datetime', label: 'Datetime' },
     { value: 'media', label: 'Media' },
     { value: 'relation', label: 'Relation' },
+    { value: 'component', label: 'Component' },
+    { value: 'dynamic_zone', label: 'Dynamic Zone' },
+    { value: 'json', label: 'JSON' },
+    { value: 'enum', label: 'Enum (Select)' },
+    { value: 'email', label: 'Email' },
 ];
 
 const addField = () => {
-    form.fields.push({ name: '', type: 'text', settings: { required: false, unique: false, related_content_type_id: null } });
+    form.fields.push({ name: '', type: 'text', settings: { required: false, unique: false, related_content_type_id: null, allowed_component_ids: [] as number[], options: [] as string[], multiple: false } });
 };
 
 const removeField = (index: number) => {
@@ -46,12 +62,13 @@ const submit = () => {
 <template>
     <AdminLayout>
 
-        <Head title="Create Content Type" />
+        <Head :title="pageTitle" />
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg max-w-2xl mx-auto p-6">
-                    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Create Content Type</h2>
+                    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">{{ pageTitle }}</h2>
+
 
                     <form @submit.prevent="submit">
                         <div class="mb-6">
@@ -59,8 +76,42 @@ const submit = () => {
                                 :error="form.errors.name" required />
                         </div>
 
-                        <!-- Content Type Settings -->
+                        <!-- Component Flag (Hidden if passed via prop? Or editable?) -->
+                        <!-- Let's allow editing it unless strict. -->
                         <div class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                            <div class="flex items-start">
+                                <input id="is_component" v-model="form.is_component" type="checkbox"
+                                    class="h-4 w-4 mt-0.5 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded" />
+                                <label for="is_component" class="ml-2 block text-sm">
+                                    <span class="font-medium text-gray-900 dark:text-gray-200">Is Component?</span>
+                                    <span class="text-gray-500 dark:text-gray-400 block text-xs mt-0.5">Components are
+                                        reusable structures used within other content types.</span>
+                                </label>
+                            </div>
+                            <div class="flex items-start mt-4">
+                                <input id="is_single" v-model="form.is_single" type="checkbox"
+                                    :disabled="form.is_component"
+                                    class="h-4 w-4 mt-0.5 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded disabled:opacity-50" />
+                                <label for="is_single" class="ml-2 block text-sm">
+                                    <span class="font-medium text-gray-900 dark:text-gray-200">Is Single Type?</span>
+                                    <span class="text-gray-500 dark:text-gray-400 block text-xs mt-0.5">Single types
+                                        have only one entry (e.g. Homepage, Global Settings).</span>
+                                </label>
+                            </div>
+                            <div class="flex items-start mt-4">
+                                <input id="is_localized" v-model="form.is_localized" type="checkbox"
+                                    :disabled="form.is_component"
+                                    class="h-4 w-4 mt-0.5 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded disabled:opacity-50" />
+                                <label for="is_localized" class="ml-2 block text-sm">
+                                    <span class="font-medium text-gray-900 dark:text-gray-200">Is Localized?</span>
+                                    <span class="text-gray-500 dark:text-gray-400 block text-xs mt-0.5">Allow content to
+                                        be translated into multiple languages.</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Content Type Settings -->
+                        <div v-if="!form.is_component" class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
                             <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Content Type Settings
                             </h3>
                             <div class="space-y-3">
@@ -117,13 +168,62 @@ const submit = () => {
                                     </div>
 
                                     <!-- Relation Settings -->
-                                    <div v-if="field.type === 'relation'" class="mb-3 pl-1 w-1/3">
-                                        <label
-                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Related
-                                            Content Type</label>
-                                        <Select v-model="field.settings.related_content_type_id"
-                                            :options="existingTypes.map(t => ({ value: t.id, label: t.name }))"
-                                            placeholder="Select Type..." />
+                                    <div v-if="field.type === 'relation'" class="mb-3 pl-1 w-2/3 flex gap-4">
+                                        <div class="w-1/2">
+                                            <label
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Related
+                                                Content Type</label>
+                                            <Select v-model="field.settings.related_content_type_id"
+                                                :options="existingTypes.filter(t => !t.is_component).map(t => ({ value: t.id, label: t.name }))"
+                                                placeholder="Select Type..." />
+                                        </div>
+                                        <div class="w-1/2 pt-6">
+                                            <label
+                                                class="flex items-center text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                                                <input v-model="field.settings.multiple" type="checkbox"
+                                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded mr-2" />
+                                                Allow Multiple (Many-to-Many)
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Component Settings -->
+                                    <div v-if="field.type === 'component'" class="mb-3 pl-1 w-2/3">
+                                        <div class="w-full">
+                                            <label
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Select
+                                                Component</label>
+                                            <Select v-model="field.settings.related_content_type_id"
+                                                :options="existingTypes.filter(t => t.is_component).map(t => ({ value: t.id, label: t.name }))"
+                                                placeholder="Select Component..." />
+                                        </div>
+                                    </div>
+
+                                    <!-- Dynamic Zone Settings -->
+                                    <div v-if="field.type === 'dynamic_zone'" class="mb-3 pl-1 w-2/3">
+                                        <div class="w-full">
+                                            <label
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Allowed
+                                                Components (hold Ctrl/Cmd to select multiple)</label>
+                                            <select multiple v-model="field.settings.allowed_component_ids"
+                                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600">
+                                                <option v-for="type in existingTypes.filter(t => t.is_component)"
+                                                    :key="type.id" :value="type.id">
+                                                    {{ type.name }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Enum Options -->
+                                    <div v-if="field.type === 'enum'" class="mb-3 pl-1">
+                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Options (comma separated)
+                                        </label>
+                                        <Input
+                                            :model-value="Array.isArray(field.settings.options) ? field.settings.options.join(', ') : ''"
+                                            @update:model-value="(val) => field.settings.options = (val as string).split(',').map(s => s.trim()).filter(s => s)"
+                                            placeholder="admin, user, guest" />
                                     </div>
 
                                     <!-- Field Settings -->

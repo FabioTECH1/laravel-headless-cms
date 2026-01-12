@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import ToastContainer from '@/Components/ToastContainer.vue';
+import { index as contentIndex } from '@/routes/admin/content';
+import { index as usersIndex } from '@/routes/admin/users';
 </script>
 
 <template>
@@ -24,7 +26,7 @@ import ToastContainer from '@/Components/ToastContainer.vue';
                     </p>
                 </div>
                 <div v-for="type in $page.props.contentTypes" :key="type.id">
-                    <Link :href="route('admin.content.index', type.slug)"
+                    <Link :href="contentIndex.url(type.slug)"
                         class="flex items-center px-2 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 group"
                         :class="{ 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white': $page.url.startsWith(`/admin/content/${type.slug}`) }">
                         {{ type.name }}
@@ -37,7 +39,7 @@ import ToastContainer from '@/Components/ToastContainer.vue';
                     </p>
                 </div>
 
-                <Link :href="route('admin.users.index')"
+                <Link :href="usersIndex.url()"
                     class="flex items-center px-2 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 group"
                     :class="{ 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white': $page.url.startsWith('/admin/users') }">
                     Users
@@ -47,6 +49,12 @@ import ToastContainer from '@/Components/ToastContainer.vue';
                     class="flex items-center px-2 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 group"
                     :class="{ 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white': $page.url === '/admin/schema' || $page.url === '/admin/schema/create' }">
                     Schema Builder
+                </Link>
+
+                <Link href="/admin/media-library"
+                    class="flex items-center px-2 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                    :class="{ 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white': $page.url.startsWith('/admin/media') }">
+                    Media Library
                 </Link>
 
                 <Link href="/admin/settings"

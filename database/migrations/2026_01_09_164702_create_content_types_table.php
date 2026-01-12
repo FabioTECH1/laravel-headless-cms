@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('slug')->unique()->index();
             $table->text('description')->nullable();
             $table->boolean('is_public')->default(false);
+            $table->boolean('is_localized')->default(false);
+            $table->boolean('is_component')->default(false);
+            $table->boolean('is_single')->default(false);
             $table->boolean('has_ownership')->default(false);
             $table->timestamps();
             $table->softDeletes();

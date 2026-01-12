@@ -14,7 +14,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $contentStats = ContentType::all()->map(function ($type) {
+        $contentStats = ContentType::where('is_component', false)->get()->map(function ($type) {
             $tableName = \Illuminate\Support\Str::plural(\Illuminate\Support\Str::snake($type->name));
             $count = 0;
             if (Schema::hasTable($tableName)) {
@@ -36,7 +36,7 @@ class DashboardController extends Controller
         return Inertia::render('Admin/Dashboard', [
             'stats' => [
                 'users' => User::count(),
-                'schemas' => ContentType::count(),
+                'schemas' => ContentType::where('is_component', false)->count(),
                 'media_count' => MediaFile::count(),
                 'media_size' => $mediaSizeFormatted,
                 'content_breakdown' => $contentStats,

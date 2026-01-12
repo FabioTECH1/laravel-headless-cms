@@ -2,6 +2,8 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import MediaUpload from '@/Components/MediaUpload.vue';
 import RichEditor from '@/Components/RichEditor.vue';
+import ComponentField from '@/Components/Content/ComponentField.vue';
+import DynamicZoneField from '@/Components/Content/DynamicZoneField.vue';
 import Input from '@/Components/Input.vue';
 import Select from '@/Components/Select.vue';
 import { useForm, Head } from '@inertiajs/vue3';
@@ -15,10 +17,13 @@ const props = defineProps<{
         fields: Array<{
             name: string;
             type: string;
+            settings?: { options?: string[]; multiple?: boolean; related_content_type_id?: number; allowed_component_ids?: number[] };
         }>;
+        is_localized?: boolean;
     };
     item?: Record<string, any>;
     options?: Record<string, Array<{ id: number; label: string }>>;
+    components?: Array<{ id: number; name: string; slug: string; fields: Array<any> }>;
 }>();
 
 const isEditing = computed(() => !!props.item);
@@ -32,15 +37,43 @@ const form = useForm(
             value = props.item ? Boolean(props.item[field.name]) : false;
         }
 
-        if (field.type === 'relation' || field.type === 'media') {
+        if (field.type === 'relation') {
+            if (field.settings?.multiple) {
+                const relations = props.item ? props.item[field.name] : [];
+                acc[field.name] = Array.isArray(relations) ? relations.map((r: any) => r.id) : [];
+            } else {
+                acc[field.name + '_id'] = props.item ? props.item[field.name + '_id'] : '';
+            }
+            return acc;
+        }
+
+        if (field.type === 'media') {
             acc[field.name + '_id'] = props.item ? props.item[field.name + '_id'] : '';
             return acc;
+        }
+
+        if (field.type === 'component') {
+            acc[field.name] = props.item ? props.item[field.name] : {};
+            return acc;
+        }
+
+        if (field.type === 'dynamic_zone') {
+            acc[field.name] = props.item ? props.item[field.name] : [];
+            return acc;
+        }
+
+        if (field.type === 'json') {
+            // Ensure JSON fields are initialized as array or object if empty
+            // For now, let's treat it as a JSON string for editing.
+            const val = props.item ? props.item[field.name] : '';
+            value = typeof val === 'object' ? JSON.stringify(val, null, 2) : val;
         }
 
         acc[field.name] = value;
         return acc;
     }, {
-        published_at: props.item ? props.item.published_at : null
+        published_at: props.item ? props.item.published_at : null,
+        locale: props.item ? props.item.locale : 'en'
     } as Record<string, any>)
 );
 
@@ -48,11 +81,24 @@ const submit = () => {
     if (isEditing.value && props.item) {
         form.put(route('admin.content.update', { slug: props.contentType.slug, id: props.item.id }));
     } else {
-        form.post(route('admin.content.store', props.contentType.slug));
+        // Parse JSON fields back to object before submit if we used string input
+        // Use transform or manual post? form.transform() is cleaner.
+        form.transform((data) => {
+            const finalData = { ...data };
+            props.contentType.fields.forEach(f => {
+                if (f.type === 'json' && typeof finalData[f.name] === 'string') {
+                    try {
+                        finalData[f.name] = JSON.parse(finalData[f.name]);
+                    } catch {
+                        // let it fail backend validation if bad json
+                    }
+                }
+            });
+            return finalData;
+        }).post(route('admin.content.store', props.contentType.slug));
     }
 };
 </script>
-
 <template>
     <AdminLayout>
 
@@ -65,6 +111,12 @@ const submit = () => {
                     }} {{ contentType.name }}</h2>
 
                     <form @submit.prevent="submit">
+                        <!-- Locale Selector -->
+                        <div v-if="contentType.is_localized" class="mb-6 w-1/3">
+                            <Select id="locale" v-model="form.locale" label="Locale"
+                                :options="[{ value: 'en', label: 'English' }, { value: 'fr', label: 'French' }, { value: 'de', label: 'German' }, { value: 'es', label: 'Spanish' }]" />
+                        </div>
+
                         <!-- Dynamic Fields -->
                         <div v-for="field in contentType.fields" :key="field.name" class="mb-6">
                             <!-- Text Input -->
@@ -99,9 +151,10 @@ const submit = () => {
                             <Input v-if="field.type === 'datetime'" :id="field.name" v-model="form[field.name]"
                                 type="datetime-local" :label="field.name.replace(/_/g, ' ')" />
 
-                            <!-- Relation (Belongs To) -->
-                            <Select v-if="field.type === 'relation'" :id="field.name" v-model="form[field.name + '_id']"
-                                :label="field.name.replace(/_/g, ' ')"
+                            <!-- Relation (Belongs To & Many-to-Many) -->
+                            <Select v-if="field.type === 'relation'" :id="field.name"
+                                v-model="form[field.settings?.multiple ? field.name : field.name + '_id']"
+                                :multiple="field.settings?.multiple" :label="field.name.replace(/_/g, ' ')"
                                 :placeholder="`Select ${field.name.replace(/_/g, ' ')}`"
                                 :options="(options?.[field.name] || []).map(opt => ({ value: opt.id, label: opt.label }))" />
 
@@ -113,6 +166,50 @@ const submit = () => {
                                 </label>
                                 <MediaUpload v-model="form[field.name + '_id']" />
                             </div>
+
+                            <!-- Component Field -->
+                            <div v-if="field.type === 'component'">
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 capitalize">
+                                    {{ field.name.replace(/_/g, ' ') }}
+                                </label>
+                                <ComponentField v-if="field.settings?.related_content_type_id && components"
+                                    :model-value="form[field.name] || {}"
+                                    @update:model-value="(val) => form[field.name] = val"
+                                    :component-id="field.settings.related_content_type_id" :components="components" />
+                            </div>
+
+                            <!-- Dynamic Zone Field -->
+                            <div v-if="field.type === 'dynamic_zone'">
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 capitalize">
+                                    {{ field.name.replace(/_/g, ' ') }}
+                                </label>
+                                <DynamicZoneField v-if="components" :model-value="form[field.name] || []"
+                                    @update:model-value="(val) => form[field.name] = val" :field="field"
+                                    :components="components" />
+                            </div>
+
+                            <!-- Email Input -->
+                            <Input v-if="field.type === 'email'" :id="field.name" v-model="form[field.name]"
+                                type="email" :label="field.name.replace(/_/g, ' ')" />
+
+
+                            <!-- JSON Input (Textarea for now) -->
+                            <div v-if="field.type === 'json'">
+                                <label :for="field.name"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 capitalize">
+                                    {{ field.name.replace(/_/g, ' ') }} (JSON)
+                                </label>
+                                <textarea :id="field.name" v-model="form[field.name]" rows="5"
+                                    class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full font-mono text-sm"></textarea>
+                            </div>
+
+                            <!-- Enum Select -->
+                            <Select v-if="field.type === 'enum'" :id="field.name" v-model="form[field.name]"
+                                :label="field.name.replace(/_/g, ' ')"
+                                :placeholder="`Select ${field.name.replace(/_/g, ' ')}`"
+                                :options="(field.settings?.options || []).map(opt => ({ value: opt, label: opt }))" />
                         </div>
 
                         <!-- Publishing Section Header -->

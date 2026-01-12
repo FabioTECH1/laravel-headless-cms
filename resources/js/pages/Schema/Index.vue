@@ -3,19 +3,29 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { route } from '@/route-helper';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
-defineProps<{
+const props = defineProps<{
     types: Array<{
         id: number;
         name: string;
         slug: string;
         created_at: string;
+        is_component: boolean;
     }>;
 }>();
 
 const confirmingDeletion = ref(false);
 const typeToDelete = ref<{ name: string; slug: string } | null>(null);
+
+const currentTab = ref<'types' | 'components'>('types');
+
+const filteredTypes = computed(() => {
+    return props.types.filter(type => {
+        if (currentTab.value === 'components') return type.is_component;
+        return !type.is_component;
+    });
+});
 
 const confirmDelete = (type: { name: string; slug: string }) => {
     typeToDelete.value = type;
@@ -37,23 +47,39 @@ const deleteType = () => {
 <template>
     <AdminLayout>
 
-        <Head title="Content Types" />
+        <Head :title="currentTab === 'components' ? 'Components' : 'Content Types'" />
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="sm:flex sm:items-center">
                     <div class="sm:flex-auto">
-                        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Content Types</h1>
-                        <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">A list of all the content types
-                            (schemas) defined in your
-                            CMS.</p>
+                        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">{{ currentTab === 'components' ?
+                            'Components' : 'Content Types' }}</h1>
+                        <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">A list of all the {{ currentTab ===
+                            'components' ? 'reusable components' : 'content types' }} defined in your CMS.</p>
                     </div>
                     <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-                        <Link :href="route('admin.schema.create')"
-                            class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                            Create Content Type
-                        </Link>
+                        <div class="flex gap-2">
+                            <Link
+                                :href="route('admin.schema.create', { is_component: currentTab === 'components' ? 1 : 0 })"
+                                class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                Create {{ currentTab === 'components' ? 'Component' : 'Content Type' }}
+                            </Link>
+                        </div>
                     </div>
+                </div>
+
+                <div class="mt-4 border-b border-gray-200 dark:border-gray-700">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button @click="currentTab = 'types'"
+                            :class="[currentTab === 'types' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm']">
+                            Content Types
+                        </button>
+                        <button @click="currentTab = 'components'"
+                            :class="[currentTab === 'components' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm']">
+                            Components
+                        </button>
+                    </nav>
                 </div>
 
                 <div class="mt-8 flow-root">
@@ -80,13 +106,13 @@ const deleteType = () => {
                                     </thead>
                                     <tbody
                                         class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
-                                        <tr v-if="types.length === 0">
+                                        <tr v-if="filteredTypes.length === 0">
                                             <td colspan="4"
                                                 class="py-4 text-center text-sm text-gray-500 dark:text-gray-400">No
-                                                content
-                                                types found.</td>
+                                                {{ currentTab === 'components' ? 'components' : 'content types' }}
+                                                found.</td>
                                         </tr>
-                                        <tr v-for="type in types" :key="type.id">
+                                        <tr v-for="type in filteredTypes" :key="type.id">
                                             <td
                                                 class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-6">
                                                 {{ type.name }}</td>
@@ -118,9 +144,10 @@ const deleteType = () => {
                 </div>
             </div>
         </div>
-        <ConfirmModal :show="confirmingDeletion" title="Delete Content Type"
-            content="Are you sure you want to delete this content type? This action cannot be undone and will PERMANENTLY DELETE all content entries associated with this type."
-            confirm-text="Delete Type" confirm-type="danger" @close="confirmingDeletion = false"
-            @confirm="deleteType" />
+        <ConfirmModal :show="confirmingDeletion"
+            :title="'Delete ' + (currentTab === 'components' ? 'Component' : 'Content Type')"
+            :content="`Are you sure you want to delete this ${currentTab === 'components' ? 'component' : 'content type'}? This action cannot be undone and will PERMANENTLY DELETE all content entries associated with this type.`"
+            :confirm-text="'Delete ' + (currentTab === 'components' ? 'Component' : 'Type')" confirm-type="danger"
+            @close="confirmingDeletion = false" @confirm="deleteType" />
     </AdminLayout>
 </template>

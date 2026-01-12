@@ -8,10 +8,13 @@ use App\Http\Requests\ContentRequest;
 use App\Http\Resources\DynamicContentResource;
 use App\Models\ContentType;
 use App\Models\DynamicEntity;
+use App\Services\QueryBuilderService;
 use Illuminate\Http\Request;
 
 class ContentController extends Controller
 {
+    public function __construct(private QueryBuilderService $queryBuilder) {}
+
     public function index(ContentIndexRequest $request, string $slug)
     {
         $validated = $request->validated();
@@ -30,11 +33,28 @@ class ContentController extends Controller
         } else {
             $query->published();
         }
+
+        if ($contentType->is_localized) {
+            $locale = $request->query('locale', 'en');
+            $query->where('locale', $locale);
+        }
+
+        // Apply QueryBuilder params (filters, sort, fields, populate)
+        $query = $this->queryBuilder->apply($query, $validated);
+
+        if ($contentType->is_single) {
+            $item = $query->first();
+
+            if (! $item) {
+                return response()->json(['data' => null]);
+            }
+
+            return new DynamicContentResource($item);
+        }
+
         $perPage = $validated['per_page'] ?? 10;
         $query = $query->paginate($perPage);
 
-        // Eager load if needed, but for now we rely on lazy loading in Resource or pre-load if we knew fields.
-        // DynamicEntity doesn't expose fields easily to query builder without iteration.
         return response()->json([
             'data' => DynamicContentResource::collection($query->items())->resolve(),
             'pagination' => [
@@ -49,9 +69,19 @@ class ContentController extends Controller
     public function store(ContentRequest $request, string $slug)
     {
         // Need ContentType for other logic (ownership), but validation is done.
-        $contentType = ContentType::where('slug', $slug)->firstOrFail();
+        $contentType = ContentType::where('slug', $slug)->with('fields')->firstOrFail();
 
         $attributes = $request->validated();
+        $relations = [];
+
+        foreach ($contentType->fields as $field) {
+            if ($field->type === 'relation' && ($field->settings['multiple'] ?? false)) {
+                if (array_key_exists($field->name, $attributes)) {
+                    $relations[$field->name] = $attributes[$field->name];
+                    unset($attributes[$field->name]);
+                }
+            }
+        }
 
         // Handle status -> published_at mapping
         if (isset($attributes['status'])) {
@@ -68,16 +98,24 @@ class ContentController extends Controller
             $attributes['user_id'] = $request->user()->id;
         }
 
+        if ($contentType->is_localized) {
+            $attributes['locale'] = $request->input('locale', 'en');
+        }
+
         $entity = (new DynamicEntity)->bind($slug);
 
         $item = $entity->create($attributes);
+
+        foreach ($relations as $name => $ids) {
+            $item->$name()->sync($ids);
+        }
 
         return (new DynamicContentResource($item))
             ->response($request)
             ->setStatusCode(201);
     }
 
-    public function show(string $slug, string $id)
+    public function show(Request $request, string $slug, string $id)
     {
         $contentType = ContentType::where('slug', $slug)->firstOrFail();
 
@@ -87,7 +125,26 @@ class ContentController extends Controller
 
         $entity = (new DynamicEntity)->bind($slug);
 
-        $item = $entity->findOrFail($id);
+        $query = $entity->newQuery();
+
+        if ($contentType->is_localized) {
+            $locale = $request->query('locale', 'en');
+            // Enforce locale check?
+            // Strapi: findOne(id) returns entry.
+            // If we want to support ?locale=fr, we should filter by it if entry has locale.
+            // But ID is unique.
+            // Let's just allow reading by ID for now, ignoring locale filter, or verify it matches query.
+            // Verification:
+            if ($request->has('locale')) {
+                $query->where('locale', $request->query('locale'));
+            }
+        }
+
+        // Apply QueryBuilder params (fields, populate only usually for show)
+        // We pass $request->all() directly as show isn't using a FormRequest with validation rules yet
+        $this->queryBuilder->apply($query, $request->all());
+
+        $item = $query->findOrFail($id);
 
         return new DynamicContentResource($item);
     }
@@ -111,6 +168,16 @@ class ContentController extends Controller
         }
 
         $attributes = $request->validated();
+        $relations = [];
+
+        foreach ($contentType->fields as $field) {
+            if ($field->type === 'relation' && ($field->settings['multiple'] ?? false)) {
+                if (array_key_exists($field->name, $attributes)) {
+                    $relations[$field->name] = $attributes[$field->name];
+                    unset($attributes[$field->name]);
+                }
+            }
+        }
 
         // Handle status -> published_at mapping
         if (isset($attributes['status'])) {
@@ -131,6 +198,10 @@ class ContentController extends Controller
         unset($attributes['user_id']);
 
         $item->update($attributes);
+
+        foreach ($relations as $name => $ids) {
+            $item->$name()->sync($ids);
+        }
 
         return new DynamicContentResource($item);
     }

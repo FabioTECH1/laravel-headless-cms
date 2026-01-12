@@ -17,6 +17,11 @@ return new class extends Migration
             $table->string('path');
             $table->string('mime_type')->nullable();
             $table->unsignedBigInteger('size')->nullable();
+            $table->string('alt_text')->nullable();
+            $table->text('caption')->nullable();
+            $table->foreignUlid('folder_id')->nullable()->constrained('media_folders')->onDelete('set null');
+            $table->integer('width')->nullable();
+            $table->integer('height')->nullable();
             $table->string('disk')->default('public');
             $table->timestamps();
         });

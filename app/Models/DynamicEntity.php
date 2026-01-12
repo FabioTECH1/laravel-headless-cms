@@ -37,6 +37,9 @@ class DynamicEntity extends Model
                 'boolean' => 'boolean',
                 'integer' => 'integer',
                 'datetime' => 'datetime',
+                'json' => 'array',
+                'component' => 'array',
+                'dynamic_zone' => 'array',
                 default => null,
             };
 
@@ -63,6 +66,33 @@ class DynamicEntity extends Model
 
             if ($field && $field->type === 'media') {
                 return $this->belongsTo(MediaFile::class, $method.'_id');
+            }
+
+            if ($field && $field->type === 'relation') {
+                $relatedTypeId = $field->settings['related_content_type_id'] ?? null;
+                $relatedType = ContentType::find($relatedTypeId);
+
+                if ($relatedType) {
+                    $relatedModel = new DynamicEntity;
+                    $relatedModel->bind($relatedType->slug);
+
+                    if ($field->settings['multiple'] ?? false) {
+                        // Many-to-Many
+                        // Determine pivot table name
+                        $slugs = [Str::singular($this->contentType->slug), Str::singular($relatedType->slug)];
+                        sort($slugs);
+                        $pivotTableName = implode('_', $slugs);
+
+                        $relation = $this->belongsToMany(DynamicEntity::class, $pivotTableName, $slugs[0].'_id', $slugs[1].'_id');
+
+                        // Ensure the related model uses the correct table
+                        $relation->getRelated()->bind($relatedType->slug);
+
+                        return $relation;
+                    }
+
+                    return $this->belongsTo(DynamicEntity::class, $method.'_id');
+                }
             }
         }
 

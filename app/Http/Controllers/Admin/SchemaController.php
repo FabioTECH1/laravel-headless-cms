@@ -17,10 +17,11 @@ class SchemaController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         return Inertia::render('Schema/Create', [
-            'existingTypes' => ContentType::select('id', 'name')->get(),
+            'existingTypes' => ContentType::select('id', 'name', 'is_component')->get(),
+            'isComponent' => $request->boolean('is_component'),
         ]);
     }
 
@@ -30,10 +31,15 @@ class SchemaController extends Controller
             'name' => ['required', 'string', 'max:255', 'alpha_num'],
             'is_public' => ['boolean'],
             'has_ownership' => ['boolean'],
+            'is_component' => ['boolean'],
+            'is_single' => ['boolean'],
+            'is_localized' => ['boolean'],
             'fields' => ['required', 'array', 'min:1'],
             'fields.*.name' => ['required', 'string', 'alpha_dash'],
-            'fields.*.type' => ['required', 'in:text,longtext,integer,boolean,datetime,media,relation'],
-            'fields.*.settings.related_content_type_id' => ['required_if:fields.*.type,relation', 'nullable', 'exists:content_types,id'],
+            'fields.*.type' => ['required', 'in:text,longtext,integer,boolean,datetime,media,relation,json,enum,email,component,dynamic_zone'],
+            'fields.*.settings.related_content_type_id' => ['required_if:fields.*.type,relation,component', 'nullable', 'exists:content_types,id'],
+            'fields.*.settings.allowed_component_ids' => ['required_if:fields.*.type,dynamic_zone', 'nullable', 'array'],
+            'fields.*.settings.options' => ['required_if:fields.*.type,enum', 'nullable', 'array'],
         ]);
 
         try {
@@ -41,7 +47,10 @@ class SchemaController extends Controller
                 $request->name,
                 $request->fields,
                 $request->boolean('is_public', false),
-                $request->boolean('has_ownership', false)
+                $request->boolean('has_ownership', false),
+                $request->boolean('is_component', false),
+                $request->boolean('is_single', false),
+                $request->boolean('is_localized', false)
             );
         } catch (\Exception $e) {
             return back()->withErrors(['name' => $e->getMessage()]);
@@ -56,7 +65,7 @@ class SchemaController extends Controller
 
         return Inertia::render('Schema/Edit', [
             'contentType' => $contentType,
-            'existingTypes' => ContentType::select('id', 'name')->get(),
+            'existingTypes' => ContentType::select('id', 'name', 'is_component')->get(),
         ]);
     }
 
@@ -65,10 +74,15 @@ class SchemaController extends Controller
         $request->validate([
             'is_public' => ['boolean'],
             'has_ownership' => ['boolean'],
+            'is_component' => ['boolean'],
+            'is_single' => ['boolean'],
+            'is_localized' => ['boolean'],
             'fields' => ['array'],
             'fields.*.name' => ['required', 'string', 'alpha_dash'],
-            'fields.*.type' => ['required', 'in:text,longtext,integer,boolean,datetime,media,relation'],
-            'fields.*.settings.related_content_type_id' => ['required_if:fields.*.type,relation', 'nullable', 'exists:content_types,id'],
+            'fields.*.type' => ['required', 'in:text,longtext,integer,boolean,datetime,media,relation,json,enum,email,component,dynamic_zone'],
+            'fields.*.settings.related_content_type_id' => ['required_if:fields.*.type,relation,component', 'nullable', 'exists:content_types,id'],
+            'fields.*.settings.allowed_component_ids' => ['required_if:fields.*.type,dynamic_zone', 'nullable', 'array'],
+            'fields.*.settings.options' => ['required_if:fields.*.type,enum', 'nullable', 'array'],
         ]);
 
         try {
@@ -76,7 +90,10 @@ class SchemaController extends Controller
                 $slug,
                 $request->fields ?? [],
                 $request->boolean('is_public'),
-                $request->boolean('has_ownership')
+                $request->boolean('has_ownership'),
+                $request->boolean('is_component'),
+                $request->boolean('is_single'),
+                $request->boolean('is_localized')
             );
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);

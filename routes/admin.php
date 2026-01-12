@@ -52,6 +52,20 @@ Route::middleware(['auth'])->group(function () {
     Route::put('users/{user}/suspend', [UserController::class, 'suspend'])->name('admin.users.suspend');
     Route::put('users/{user}/unsuspend', [UserController::class, 'unsuspend'])->name('admin.users.unsuspend');
 
+    // Media Library Page
+    Route::get('/media-library', function () {
+        return \Inertia\Inertia::render('Media/Index');
+    })->name('admin.media-library');
+
     // Media
+    Route::get('/media', [MediaController::class, 'index'])->name('admin.media.index');
     Route::post('/media', [MediaController::class, 'store'])->name('admin.media.store');
+    Route::put('/media/{id}', [MediaController::class, 'update'])->name('admin.media.update');
+    Route::delete('/media/{id}', [MediaController::class, 'destroy'])->name('admin.media.destroy');
+
+    // Media Folders
+    Route::get('/media-folders', [\App\Http\Controllers\Admin\MediaFolderController::class, 'index'])->name('admin.media-folders.index');
+    Route::post('/media-folders', [\App\Http\Controllers\Admin\MediaFolderController::class, 'store'])->name('admin.media-folders.store');
+    Route::put('/media-folders/{id}', [\App\Http\Controllers\Admin\MediaFolderController::class, 'update'])->name('admin.media-folders.update');
+    Route::delete('/media-folders/{id}', [\App\Http\Controllers\Admin\MediaFolderController::class, 'destroy'])->name('admin.media-folders.destroy');
 });

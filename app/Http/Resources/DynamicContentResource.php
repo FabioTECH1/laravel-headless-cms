@@ -24,7 +24,7 @@ class DynamicContentResource extends JsonResource
 
         $attributes = $this->getAttributes();
 
-        foreach ($attributes as $key => $value) {
+        foreach ($attributes as $key => $raw) {
             // Skip standard fields we already added
             if (in_array($key, array_keys($data))) {
                 continue;
@@ -42,7 +42,8 @@ class DynamicContentResource extends JsonResource
                 }
             }
 
-            $data[$key] = $value;
+            // Use property access to ensure casts are applied (e.g. JSON to Array)
+            $data[$key] = $this->$key;
         }
 
         return $data;

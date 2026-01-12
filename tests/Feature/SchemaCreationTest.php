@@ -88,4 +88,22 @@ describe('Schema Creation', function () {
         expect(Schema::hasColumn('products', 'price'))->toBeTrue();
         assertDatabaseCount('content_fields', 2);
     });
+
+    it('supports new field types: json, enum, email', function () {
+        $schemaManager = new SchemaManager;
+
+        $schemaManager->createType('Customer', [
+            ['name' => 'preferences', 'type' => 'json'],
+            ['name' => 'role', 'type' => 'enum', 'settings' => ['options' => ['admin', 'user', 'guest']]],
+            ['name' => 'contact_email', 'type' => 'email'],
+        ]);
+
+        expect(Schema::hasTable('customers'))->toBeTrue();
+        expect(Schema::hasColumn('customers', 'preferences'))->toBeTrue();
+        expect(Schema::hasColumn('customers', 'role'))->toBeTrue();
+        expect(Schema::hasColumn('customers', 'contact_email'))->toBeTrue();
+
+        // Verify column types in database if possible, or just trust Schema::hasColumn for now
+        // For SQLite, JSON is TEXT, Enum is VARCHAR (String), Email is VARCHAR (String)
+    });
 });

@@ -46,7 +46,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'contentTypes' => ContentType::select('id', 'name', 'slug')->get(),
+            'contentTypes' => ContentType::where('is_component', false)->select('id', 'name', 'slug', 'is_single')->get(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

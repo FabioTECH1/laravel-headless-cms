@@ -14,17 +14,16 @@ class ContentIndexRequest extends FormRequest
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
             'status' => 'in:draft,published',
             'page' => 'integer',
             'per_page' => 'integer|max:100',
+            'filters' => 'array',
+            'sort' => 'nullable', // Can be string or array
+            'fields' => 'array',
+            'populate' => 'nullable', // Can be string or array
         ];
     }
 }

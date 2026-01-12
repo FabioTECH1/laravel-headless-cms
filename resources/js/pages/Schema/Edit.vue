@@ -12,20 +12,24 @@ const props = defineProps<{
         slug: string;
         is_public: boolean;
         has_ownership: boolean;
+        is_component: boolean;
+        is_localized: boolean;
         fields: Array<{
             id: number;
             name: string;
             type: string;
-            settings: { required: boolean; unique: boolean; related_content_type_id?: number | null };
+            settings: { required: boolean; unique: boolean; related_content_type_id?: number | null; allowed_component_ids?: number[]; options?: string[]; multiple?: boolean };
         }>;
     };
-    existingTypes: Array<{ id: number; name: string }>;
+    existingTypes: Array<{ id: number; name: string; is_component: boolean }>;
 }>();
 
 const form = useForm({
     is_public: props.contentType.is_public,
     has_ownership: props.contentType.has_ownership,
-    fields: [] as Array<{ name: string; type: string; settings: { required: boolean; unique: boolean; related_content_type_id?: number | null } }>
+    is_component: props.contentType.is_component,
+    is_localized: props.contentType.is_localized,
+    fields: [] as Array<{ name: string; type: string; settings: { required: boolean; unique: boolean; related_content_type_id?: number | null; allowed_component_ids?: number[]; options?: string[]; multiple?: boolean } }>
 });
 
 const fieldTypeOptions = [
@@ -36,10 +40,15 @@ const fieldTypeOptions = [
     { value: 'datetime', label: 'Datetime' },
     { value: 'media', label: 'Media' },
     { value: 'relation', label: 'Relation' },
+    { value: 'component', label: 'Component' },
+    { value: 'dynamic_zone', label: 'Dynamic Zone' },
+    { value: 'json', label: 'JSON' },
+    { value: 'enum', label: 'Enum (Select)' },
+    { value: 'email', label: 'Email' },
 ];
 
 const addField = () => {
-    form.fields.push({ name: '', type: 'text', settings: { required: false, unique: false, related_content_type_id: null } });
+    form.fields.push({ name: '', type: 'text', settings: { required: false, unique: false, related_content_type_id: null, allowed_component_ids: [], options: [], multiple: false } });
 };
 
 const removeField = (index: number) => {
@@ -59,17 +68,33 @@ const submit = () => {
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg max-w-2xl mx-auto p-6">
-                    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Edit {{ contentType.name }}</h2>
+                    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Edit {{ contentType.name }} {{
+                        contentType.is_component ? '(Component)' : '' }}</h2>
 
                     <form @submit.prevent="submit">
                         <!-- Content Type Name (Read-only) -->
                         <div class="mb-6">
                             <Input id="name" :model-value="contentType.name" label="Name" disabled />
-                            <p class="text-xs text-gray-500 mt-1">Content type name cannot be changed</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ contentType.is_component ? 'Component' : 'Content type' }} name cannot be changed</p>
+                        </div>
+
+                        <!-- Is Component (Read-only) -->
+                        <div class="mb-6" v-if="contentType.is_component">
+                            <div
+                                class="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-md border border-blue-100 dark:border-blue-800">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                    class="w-5 h-5">
+                                    <path fill-rule="evenodd"
+                                        d="M2 4.25A2.25 2.25 0 0 1 4.25 2h2.5A2.25 2.25 0 0 1 9 4.25v2.5A2.25 2.25 0 0 1 6.75 9h-2.5A2.25 2.25 0 0 1 2 6.75v-2.5Zm0 9A2.25 2.25 0 0 1 4.25 11h2.5A2.25 2.25 0 0 1 9 13.25v2.5A2.25 2.25 0 0 1 6.75 18h-2.5A2.25 2.25 0 0 1 2 15.75v-2.5Zm9-9A2.25 2.25 0 0 1 13.25 2h2.5A2.25 2.25 0 0 1 18 4.25v2.5A2.25 2.25 0 0 1 15.75 9h-2.5A2.25 2.25 0 0 1 11 6.75v-2.5Zm0 9A2.25 2.25 0 0 1 13.25 11h2.5A2.25 2.25 0 0 1 18 13.25v2.5A2.25 2.25 0 0 1 15.75 18h-2.5A2.25 2.25 0 0 1 11 15.75v-2.5Z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                <span class="text-sm font-medium">This is a Component</span>
+                            </div>
                         </div>
 
                         <!-- Content Type Settings -->
-                        <div class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                        <div v-if="!contentType.is_component"
+                            class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
                             <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Content Type Settings
                             </h3>
                             <div class="space-y-3">
@@ -93,6 +118,15 @@ const submit = () => {
                                             content item</span>
                                     </label>
                                 </div>
+                                <div class="flex items-start">
+                                    <input id="is_localized" v-model="form.is_localized" type="checkbox"
+                                        class="h-4 w-4 mt-0.5 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded" />
+                                    <label for="is_localized" class="ml-2 block text-sm">
+                                        <span class="font-medium text-gray-900 dark:text-gray-200">Is Localized?</span>
+                                        <span class="text-gray-500 dark:text-gray-400 block text-xs mt-0.5">Allow
+                                            content to be translated</span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
@@ -104,15 +138,23 @@ const submit = () => {
                                     class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                                     <div class="flex-1">
                                         <span class="text-sm font-medium text-gray-900 dark:text-gray-200">{{ field.name
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400">
                                         {{fieldTypeOptions.find(opt => opt.value === field.type)?.label || field.type
                                         }}
-                                        <span v-if="field.type === 'relation' && field.settings.related_content_type_id"
+                                        <span
+                                            v-if="(field.type === 'relation' || field.type === 'component') && field.settings.related_content_type_id"
                                             class="ml-1 text-xs text-gray-400">
                                             (-> {{existingTypes.find(t => t.id ===
-                                                field.settings.related_content_type_id)?.name || 'Unknown' }})
+                                                field.settings.related_content_type_id)?.name || 'Unknown'}})
+                                        </span>
+                                        <span v-if="field.type === 'dynamic_zone'" class="ml-1 text-xs text-gray-400">
+                                            (Dynamic Zone)
+                                        </span>
+                                        <span v-if="field.type === 'enum' && field.settings.options"
+                                            class="ml-1 text-xs text-gray-400">
+                                            [{{ field.settings.options.join(', ') }}]
                                         </span>
                                     </div>
                                     <div class="flex gap-2 text-xs text-gray-500">
@@ -156,13 +198,62 @@ const submit = () => {
                                     </div>
 
                                     <!-- Relation Settings -->
-                                    <div v-if="field.type === 'relation'" class="mb-3 pl-1 w-1/3">
-                                        <label
-                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Related
-                                            Content Type</label>
-                                        <Select v-model="field.settings.related_content_type_id"
-                                            :options="existingTypes.map(t => ({ value: t.id, label: t.name }))"
-                                            placeholder="Select Type..." />
+                                    <div v-if="field.type === 'relation'" class="mb-3 pl-1 w-2/3 flex gap-4">
+                                        <div class="w-1/2">
+                                            <label
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Related
+                                                Content Type</label>
+                                            <Select v-model="field.settings.related_content_type_id"
+                                                :options="existingTypes.filter(t => !t.is_component).map(t => ({ value: t.id, label: t.name }))"
+                                                placeholder="Select Type..." />
+                                        </div>
+                                        <div class="w-1/2 pt-6">
+                                            <label
+                                                class="flex items-center text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                                                <input v-model="field.settings.multiple" type="checkbox"
+                                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded mr-2" />
+                                                Allow Multiple (M2M)
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Component Settings -->
+                                    <div v-if="field.type === 'component'" class="mb-3 pl-1 w-2/3">
+                                        <div class="w-full">
+                                            <label
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Select
+                                                Component</label>
+                                            <Select v-model="field.settings.related_content_type_id"
+                                                :options="existingTypes.filter(t => t.is_component).map(t => ({ value: t.id, label: t.name }))"
+                                                placeholder="Select Component..." />
+                                        </div>
+                                    </div>
+
+                                    <!-- Dynamic Zone Settings -->
+                                    <div v-if="field.type === 'dynamic_zone'" class="mb-3 pl-1 w-2/3">
+                                        <div class="w-full">
+                                            <label
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Allowed
+                                                Components (hold Ctrl/Cmd to select multiple)</label>
+                                            <select multiple v-model="field.settings.allowed_component_ids"
+                                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600">
+                                                <option v-for="type in existingTypes.filter(t => t.is_component)"
+                                                    :key="type.id" :value="type.id">
+                                                    {{ type.name }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Enum Options -->
+                                    <div v-if="field.type === 'enum'" class="mb-3 pl-1">
+                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Options (comma separated)
+                                        </label>
+                                        <Input
+                                            :model-value="Array.isArray(field.settings.options) ? field.settings.options.join(', ') : ''"
+                                            @update:model-value="val => field.settings.options = (val as string).split(',').map(s => s.trim()).filter(s => s)"
+                                            placeholder="admin, user, guest" />
                                     </div>
 
                                     <!-- Field Settings -->
