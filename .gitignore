@@ -25,7 +25,6 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
-/.specs
-/GEMINI.md
 /database/database.sqlite
-/laravel-cms.json
+laravel-cms.json
+
