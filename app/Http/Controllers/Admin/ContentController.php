@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ContentRequest;
 use App\Models\ContentType;
 use App\Models\DynamicEntity;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class ContentController extends Controller
@@ -109,6 +111,11 @@ class ContentController extends Controller
             $attributes['locale'] = $request->input('locale', 'en');
         }
 
+        // Auto-assign owner
+        if ($contentType->has_ownership) {
+            $attributes['user_id'] = Auth::id();
+        }
+
         $item = $entity->create($attributes);
 
         foreach ($relations as $name => $ids) {
@@ -139,10 +146,12 @@ class ContentController extends Controller
         }
 
         if (! empty($with)) {
-            $entity = $entity->with($with);
+            $entity = $entity->from($entity->getTable())->with($with);
         }
 
         $item = $entity->findOrFail($id);
+
+        $this->authorizeOwnership($contentType, $item);
 
         $options = $this->getRelationOptions($contentType);
 
@@ -165,6 +174,8 @@ class ContentController extends Controller
         $entity = (new DynamicEntity)->bind($slug);
 
         $item = $entity->findOrFail($id);
+
+        $this->authorizeOwnership($contentType, $item);
 
         $attributes = $request->all();
         $relations = [];
@@ -206,6 +217,9 @@ class ContentController extends Controller
         $entity = (new DynamicEntity)->bind($slug);
 
         $item = $entity->findOrFail($id);
+
+        $this->authorizeOwnership($contentType, $item);
+
         $item->delete();
 
         return redirect()->back()->with('success', 'Content deleted successfully.');
@@ -236,5 +250,23 @@ class ContentController extends Controller
     protected function getComponents()
     {
         return ContentType::where('is_component', true)->with('fields')->get();
+    }
+
+    protected function authorizeOwnership(ContentType $contentType, $item)
+    {
+        if ($contentType->has_ownership) {
+            // Allow if user is super-admin or editor
+            $user = User::find(Auth::id());
+            if ($user->hasRole(['super-admin', 'editor'])) {
+                return;
+            }
+
+            // Allow if user owns the content
+            if ($item->user_id === Auth::id()) {
+                return;
+            }
+
+            abort(403, 'You do not have permission to modify this content.');
+        }
     }
 }

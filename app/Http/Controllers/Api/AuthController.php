@@ -35,6 +35,9 @@ class AuthController extends Controller
             'is_admin' => false,
         ]);
 
+        // Assign default viewer role to API users
+        $user->assignRole('viewer');
+
         $token = $user->createToken('default')->plainTextToken;
 
         return response()->json([

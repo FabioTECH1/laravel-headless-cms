@@ -15,10 +15,20 @@ class SettingsController extends Controller
                 return [
                     'id' => $token->id,
                     'name' => $token->name,
+                    'abilities' => $token->abilities,
                     'last_used_at' => $token->last_used_at?->diffForHumans() ?? 'Never',
                     'created_at' => $token->created_at->format('Y-m-d H:i'),
                 ];
             }),
+            'availableAbilities' => [
+                ['value' => '*', 'label' => 'Full Access', 'description' => 'All permissions'],
+                ['value' => 'content:read', 'label' => 'Content: Read', 'description' => 'View content via API'],
+                ['value' => 'content:write', 'label' => 'Content: Write', 'description' => 'Create/update content'],
+                ['value' => 'content:delete', 'label' => 'Content: Delete', 'description' => 'Delete content'],
+                ['value' => 'media:read', 'label' => 'Media: Read', 'description' => 'View media via API'],
+                ['value' => 'media:write', 'label' => 'Media: Write', 'description' => 'Upload media'],
+                ['value' => 'media:delete', 'label' => 'Media: Delete', 'description' => 'Delete media'],
+            ],
             'systemInfo' => [
                 'laravel_version' => app()->version(),
                 'environment' => app()->environment(),
@@ -31,9 +41,13 @@ class SettingsController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'abilities' => 'nullable|array',
+            'abilities.*' => 'string|in:content:read,content:write,content:delete,media:read,media:write,media:delete,*',
         ]);
 
-        $token = auth()->user()->createToken($request->name);
+        $abilities = $request->abilities ?? ['*'];
+
+        $token = auth()->user()->createToken($request->name, $abilities);
 
         return back()->with('token', $token->plainTextToken)
             ->with('success', 'Token created successfully.');

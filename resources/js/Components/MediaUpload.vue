@@ -26,6 +26,14 @@ const upload = async (event: Event) => {
     if (!target.files || target.files.length === 0) return;
 
     const file = target.files[0];
+
+    // Check file size (server limit is 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+        showError('File size exceeds the server limit of 2MB.');
+        target.value = '';
+        return;
+    }
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -106,7 +114,7 @@ const remove = () => {
                     class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                     Select File
                 </button>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Images, Docs (Max 10MB)</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Images, Docs (Max 2MB)</p>
             </template>
         </div>
     </div>

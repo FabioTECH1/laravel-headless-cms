@@ -28,7 +28,6 @@ class DynamicEntity extends Model
             throw new ModelNotFoundException("Content Type with slug [{$slug}] not found.");
         }
 
-        // Logic must match SchemaManager's table naming convention
         $tableName = Str::plural(Str::snake($this->contentType->name));
         $this->setTable($tableName);
 
@@ -77,15 +76,12 @@ class DynamicEntity extends Model
                     $relatedModel->bind($relatedType->slug);
 
                     if ($field->settings['multiple'] ?? false) {
-                        // Many-to-Many
-                        // Determine pivot table name
                         $slugs = [Str::singular($this->contentType->slug), Str::singular($relatedType->slug)];
                         sort($slugs);
                         $pivotTableName = implode('_', $slugs);
 
                         $relation = $this->belongsToMany(DynamicEntity::class, $pivotTableName, $slugs[0].'_id', $slugs[1].'_id');
 
-                        // Ensure the related model uses the correct table
                         $relation->getRelated()->bind($relatedType->slug);
 
                         return $relation;
@@ -114,9 +110,6 @@ class DynamicEntity extends Model
 
         if (isset($this->contentType)) {
             $model->contentType = $this->contentType;
-            // Re-apply casts if needed, though bind() logic did it.
-            // Since newInstance doesn't call bind, we might lose casts if not careful.
-            // Let's copy casts too.
             $model->mergeCasts($this->casts);
         }
 

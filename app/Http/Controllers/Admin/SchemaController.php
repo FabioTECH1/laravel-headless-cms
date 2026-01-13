@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SchemaRequest;
 use App\Models\ContentType;
 use App\Services\SchemaManager;
 use Illuminate\Http\Request;
@@ -25,22 +26,9 @@ class SchemaController extends Controller
         ]);
     }
 
-    public function store(Request $request, SchemaManager $manager)
+    public function store(SchemaRequest $request, SchemaManager $manager)
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255', 'alpha_num'],
-            'is_public' => ['boolean'],
-            'has_ownership' => ['boolean'],
-            'is_component' => ['boolean'],
-            'is_single' => ['boolean'],
-            'is_localized' => ['boolean'],
-            'fields' => ['required', 'array', 'min:1'],
-            'fields.*.name' => ['required', 'string', 'alpha_dash'],
-            'fields.*.type' => ['required', 'in:text,longtext,integer,boolean,datetime,media,relation,json,enum,email,component,dynamic_zone'],
-            'fields.*.settings.related_content_type_id' => ['required_if:fields.*.type,relation,component', 'nullable', 'exists:content_types,id'],
-            'fields.*.settings.allowed_component_ids' => ['required_if:fields.*.type,dynamic_zone', 'nullable', 'array'],
-            'fields.*.settings.options' => ['required_if:fields.*.type,enum', 'nullable', 'array'],
-        ]);
+        // Validation handled by SchemaRequest
 
         try {
             $manager->createType(
@@ -69,21 +57,9 @@ class SchemaController extends Controller
         ]);
     }
 
-    public function update(Request $request, string $slug, SchemaManager $manager)
+    public function update(SchemaRequest $request, string $slug, SchemaManager $manager)
     {
-        $request->validate([
-            'is_public' => ['boolean'],
-            'has_ownership' => ['boolean'],
-            'is_component' => ['boolean'],
-            'is_single' => ['boolean'],
-            'is_localized' => ['boolean'],
-            'fields' => ['array'],
-            'fields.*.name' => ['required', 'string', 'alpha_dash'],
-            'fields.*.type' => ['required', 'in:text,longtext,integer,boolean,datetime,media,relation,json,enum,email,component,dynamic_zone'],
-            'fields.*.settings.related_content_type_id' => ['required_if:fields.*.type,relation,component', 'nullable', 'exists:content_types,id'],
-            'fields.*.settings.allowed_component_ids' => ['required_if:fields.*.type,dynamic_zone', 'nullable', 'array'],
-            'fields.*.settings.options' => ['required_if:fields.*.type,enum', 'nullable', 'array'],
-        ]);
+        // Validation handled by SchemaRequest
 
         try {
             $manager->updateType(

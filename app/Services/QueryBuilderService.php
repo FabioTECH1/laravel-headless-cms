@@ -45,13 +45,11 @@ class QueryBuilderService
     protected function applyFilters(Builder $query, array $filters)
     {
         foreach ($filters as $field => $conditions) {
-            // Handle field nesting for JSON or relations if needed (simplified for now)
             if (is_array($conditions)) {
                 foreach ($conditions as $operator => $value) {
                     $this->applyCondition($query, $field, $operator, $value);
                 }
             } else {
-                // Default to $eq if no operator provided
                 $this->applyCondition($query, $field, '$eq', $conditions);
             }
         }
@@ -98,7 +96,6 @@ class QueryBuilderService
 
     protected function applySort(Builder $query, $sort)
     {
-        // sort=title:asc or sort[0]=title:asc
         $sortParams = is_array($sort) ? $sort : explode(',', $sort);
 
         foreach ($sortParams as $param) {
@@ -114,7 +111,6 @@ class QueryBuilderService
 
     protected function applyFields(Builder $query, array $fields)
     {
-        // We always need ID for internals, so ensure it's there.
         if (! in_array('id', $fields)) {
             array_unshift($fields, 'id');
         }

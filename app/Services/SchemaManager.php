@@ -25,7 +25,7 @@ class SchemaManager
             throw new Exception("Table {$tableName} already exists.");
         }
 
-        return DB::transaction(function () use ($name, $slug, $tableName, $fields, $isPublic, $hasOwnership, $isComponent, $isSingle, $isLocalized) {
+        try {
             $contentType = ContentType::create([
                 'name' => $name,
                 'slug' => $slug,
@@ -37,6 +37,13 @@ class SchemaManager
             ]);
 
             foreach ($fields as $fieldData) {
+                if ($fieldData['type'] === 'dynamic_zone' && isset($fieldData['settings']['allowed_components'])) {
+                    $componentNames = $fieldData['settings']['allowed_components'];
+                    $componentIds = ContentType::whereIn('name', $componentNames)->pluck('id')->toArray();
+                    $fieldData['settings']['allowed_component_ids'] = $componentIds;
+                    unset($fieldData['settings']['allowed_components']);
+                }
+
                 $contentType->fields()->create([
                     'name' => $fieldData['name'],
                     'type' => $fieldData['type'],
@@ -82,7 +89,17 @@ class SchemaManager
             }
 
             return $contentType;
-        });
+
+        } catch (Exception $e) {
+            // Manual Rollback
+            if (isset($contentType) && $contentType->exists) {
+                $contentType->delete();
+            }
+            if (isset($tableName) && Schema::hasTable($tableName)) {
+                Schema::dropIfExists($tableName);
+            }
+            throw $e;
+        }
     }
 
     public function updateType(string $slug, array $newFields, bool $isPublic, bool $hasOwnership, bool $isComponent = false, bool $isSingle = false, bool $isLocalized = false): void
@@ -90,7 +107,7 @@ class SchemaManager
         $contentType = ContentType::where('slug', $slug)->firstOrFail();
         $tableName = Str::plural(Str::snake($contentType->name));
 
-        DB::transaction(function () use ($contentType, $tableName, $newFields, $isPublic, $hasOwnership, $isComponent, $isSingle, $isLocalized) {
+        try {
             $wasOwned = $contentType->has_ownership;
             $wasLocalized = $contentType->is_localized;
 
@@ -120,6 +137,13 @@ class SchemaManager
 
             // Add new fields if provided
             foreach ($newFields as $fieldData) {
+                if ($fieldData['type'] === 'dynamic_zone' && isset($fieldData['settings']['allowed_components'])) {
+                    $componentNames = $fieldData['settings']['allowed_components'];
+                    $componentIds = ContentType::whereIn('name', $componentNames)->pluck('id')->toArray();
+                    $fieldData['settings']['allowed_component_ids'] = $componentIds;
+                    unset($fieldData['settings']['allowed_components']);
+                }
+
                 $contentType->fields()->create([
                     'name' => $fieldData['name'],
                     'type' => $fieldData['type'],
@@ -145,7 +169,13 @@ class SchemaManager
                     }
                 }
             }
-        });
+
+        } catch (Exception $e) {
+            // Manual Rollback is tricky for updates as we don't know the exact previous state easily without more complexity
+            // For now, we propagate exception. A more robust solution involves snapshots or specific rollback steps.
+            // Given the scope, avoiding the transaction crash is the priority.
+            throw $e;
+        }
     }
 
     protected function addColumn(Blueprint $table, array $fieldData): void
@@ -182,10 +212,13 @@ class SchemaManager
         $contentType = ContentType::where('slug', $slug)->firstOrFail();
         $tableName = Str::plural(Str::snake($contentType->name));
 
-        DB::transaction(function () use ($contentType, $tableName) {
+        // DB::transaction removed
+        try {
             $contentType->delete();
             Schema::dropIfExists($tableName);
-        });
+        } catch (Exception $e) {
+            throw $e;
+        }
     }
 
     protected function ensurePivotTable(string $parentSlug, array $fieldData): void

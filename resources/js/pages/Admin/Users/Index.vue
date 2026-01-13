@@ -8,12 +8,16 @@ import Modal from '@/Components/Modal.vue';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
 import { route } from '@/route-helper';
 import { useToast } from '@/composables/useToast';
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 
 const props = defineProps<{
     users: {
         data: Array<any>;
         links: Array<any>;
     };
+    roles: Array<{ id: string; name: string }>;
     filters: {
         search: string;
     };
@@ -37,7 +41,7 @@ const form = useForm({
     email: '',
     password: '',
     password_confirmation: '',
-    is_admin: false,
+    role: '',
 });
 
 const searchUsers = () => {
@@ -66,7 +70,7 @@ const openEditModal = (user: any) => {
     form.clearErrors();
     form.name = user.name;
     form.email = user.email;
-    form.is_admin = !!user.is_admin;
+    form.role = user.roles && user.roles.length > 0 ? user.roles[0].name : '';
     showingUserModal.value = true;
 };
 
@@ -164,7 +168,7 @@ const executeAction = () => {
                             Search
                         </button>
                     </div>
-                    <button @click="openCreateModal"
+                    <button v-if="can('create-users')" @click="openCreateModal"
                         class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Create User
                     </button>
@@ -202,10 +206,14 @@ const executeAction = () => {
                                     <div class="text-sm text-gray-500 dark:text-gray-400">{{ user.email }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span v-if="user.is_admin"
-                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">Admin</span>
+                                    <span v-if="user.roles && user.roles.length > 0"
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 capitalize">
+                                        {{ user.roles[0].name.replace('-', ' ') }}
+                                    </span>
                                     <span v-else
-                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">User</span>
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                        No Role
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span v-if="user.suspended_at"
@@ -215,16 +223,18 @@ const executeAction = () => {
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end items-center gap-4">
-                                        <button @click="openEditModal(user)"
+                                        <button v-if="can('edit-users')" @click="openEditModal(user)"
                                             class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 transition-colors">Edit</button>
 
                                         <template v-if="user.id !== $page.props.auth.user.id">
-                                            <button v-if="!user.suspended_at" @click="confirmSuspend(user)"
+                                            <button v-if="can('edit-users') && !user.suspended_at"
+                                                @click="confirmSuspend(user)"
                                                 class="text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300 transition-colors">Suspend</button>
-                                            <button v-else @click="confirmUnsuspend(user)"
+                                            <button v-if="can('edit-users') && user.suspended_at"
+                                                @click="confirmUnsuspend(user)"
                                                 class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 transition-colors">Unsuspend</button>
 
-                                            <button @click="confirmDelete(user)"
+                                            <button v-if="can('delete-users')" @click="confirmDelete(user)"
                                                 class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors">Delete</button>
                                         </template>
                                     </div>
@@ -263,12 +273,20 @@ const executeAction = () => {
                         v-model="form.password_confirmation" label="Confirm Password" />
 
                     <div class="block">
-                        <label class="flex items-center">
-                            <input type="checkbox" v-model="form.is_admin"
-                                :disabled="editingUser && editingUser.id === $page.props.auth.user.id"
-                                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed" />
-                            <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">Is Administrator</span>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Role <span class="text-red-500">*</span>
                         </label>
+                        <select v-model="form.role" required
+                            :disabled="editingUser && editingUser.id === $page.props.auth.user.id"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed">
+                            <option value="" disabled>Select a role</option>
+                            <option v-for="role in roles" :key="role.id" :value="role.name" class="capitalize">
+                                {{ role.name.replace('-', ' ') }}
+                            </option>
+                        </select>
+                        <p v-if="form.errors.role" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                            {{ form.errors.role }}
+                        </p>
                     </div>
                 </div>
 

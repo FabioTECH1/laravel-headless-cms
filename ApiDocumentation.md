@@ -123,12 +123,30 @@ Retrieve only specific fields to optimize payload size.
 - Syntax: `fields[0]=field_name`
 - Example: `GET /api/content/posts?fields[0]=title&fields[1]=slug`
 
-#### Population
-Eager load relationships.
+### 1.2 Population & Components
+Retrieve related content and component data.
 
-- Syntax: `populate[0]=relation_name`
-- Example: `GET /api/content/posts?populate[0]=author`
+- **Populate All:** `populate=*` (Retrieves all direct relations and media).
+- **Specific Relation:** `populate[0]=author&populate[1]=category`.
+- **Deep Population:** `populate[sections][populate]=*` (for dynamic zones components).
 
+#### Dynamic Zone Response Structure
+Dynamic zones return an array of mixed components, identified by the `__component` key.
+
+```json
+"sections": [
+  {
+    "__component": "rich-text-block",
+    "content": "<h1>Hello World</h1>",
+    "alignment": "center"
+  },
+  {
+    "__component": "cta-block",
+    "headline": "Sign Up",
+    "url": "/register"
+  }
+]
+```
 
 ### 2. Get Single Content
 Retrieve a specific content item by its ID.
@@ -140,6 +158,11 @@ Retrieve a specific content item by its ID.
     "data": {
       "id": "01kem...",
       "title": "My Blog Post",
+      "seo": {
+          "__component": "seo-metadata",
+          "meta_title": "SEO Title",
+          "meta_description": "..."
+      },
       ...
     }
   }
@@ -177,9 +200,40 @@ Update an existing content item. Requires authentication. Ownership or Admin pol
 ### 5. Delete Content
 Delete a content item. Requires authentication.
 
-- **Endpoint:** `DELETE /content/{slug}/{id}`
-- **Headers:** `Authorization: Bearer <token>`
-- **Response (204 No Content):** Empty body.
+### 5. Webhooks (Event Notifications)
+The system sends POST requests to registered URLs when specific events occur.
+
+### Events
+- `content.created`
+- `content.updated`
+- `content.deleted`
+
+### Security (HMAC Signature)
+Each request includes an `X-Hub-Signature-256` header. You must verify this signature using your secret key.
+
+**Verification Example (PHP):**
+```php
+$signature = $request->header('X-Hub-Signature-256');
+$hash = hash_hmac('sha256', $request->getContent(), $yourSecret);
+
+if (!hash_equals($signature, $hash)) {
+    abort(401, 'Invalid Signature');
+}
+```
+
+### 6. Media API
+Manage file uploads.
+
+- **Endpoint:** `POST /media/upload`
+- **Headers:** `Authorization: Bearer <token>`, `Content-Type: multipart/form-data`
+- **Body:** `file` (Binary)
+- **Response:**
+  ```json
+  {
+    "id": "01kem...",
+    "url": "/storage/uploads/..."
+  }
+  ```
 
 ---
 

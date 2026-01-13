@@ -75,7 +75,9 @@ const submit = () => {
                         <!-- Content Type Name (Read-only) -->
                         <div class="mb-6">
                             <Input id="name" :model-value="contentType.name" label="Name" disabled />
-                            <p class="text-xs text-gray-500 mt-1">{{ contentType.is_component ? 'Component' : 'Content type' }} name cannot be changed</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                {{ contentType.is_component ? 'Component' : 'Content type' }} name cannot be changed
+                            </p>
                         </div>
 
                         <!-- Is Component (Read-only) -->
@@ -138,7 +140,7 @@ const submit = () => {
                                     class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                                     <div class="flex-1">
                                         <span class="text-sm font-medium text-gray-900 dark:text-gray-200">{{ field.name
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400">
                                         {{fieldTypeOptions.find(opt => opt.value === field.type)?.label || field.type
@@ -183,7 +185,8 @@ const submit = () => {
                                         </div>
 
                                         <div class="w-1/3">
-                                            <Select v-model="field.type" :options="fieldTypeOptions" />
+                                            <Select v-model="field.type" :options="fieldTypeOptions"
+                                                :error="form.errors[`fields.${index}.type`]" />
                                         </div>
 
                                         <button type="button" @click="removeField(index)"
@@ -205,7 +208,8 @@ const submit = () => {
                                                 Content Type</label>
                                             <Select v-model="field.settings.related_content_type_id"
                                                 :options="existingTypes.filter(t => !t.is_component).map(t => ({ value: t.id, label: t.name }))"
-                                                placeholder="Select Type..." />
+                                                placeholder="Select Type..."
+                                                :error="form.errors[`fields.${index}.settings.related_content_type_id`]" />
                                         </div>
                                         <div class="w-1/2 pt-6">
                                             <label
@@ -225,7 +229,8 @@ const submit = () => {
                                                 Component</label>
                                             <Select v-model="field.settings.related_content_type_id"
                                                 :options="existingTypes.filter(t => t.is_component).map(t => ({ value: t.id, label: t.name }))"
-                                                placeholder="Select Component..." />
+                                                placeholder="Select Component..."
+                                                :error="form.errors[`fields.${index}.settings.related_content_type_id`]" />
                                         </div>
                                     </div>
 
@@ -236,12 +241,17 @@ const submit = () => {
                                                 class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Allowed
                                                 Components (hold Ctrl/Cmd to select multiple)</label>
                                             <select multiple v-model="field.settings.allowed_component_ids"
-                                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600">
+                                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600"
+                                                :class="{ 'ring-red-300 focus:ring-red-500': form.errors[`fields.${index}.settings.allowed_component_ids`] }">
                                                 <option v-for="type in existingTypes.filter(t => t.is_component)"
                                                     :key="type.id" :value="type.id">
                                                     {{ type.name }}
                                                 </option>
                                             </select>
+                                            <p v-if="form.errors[`fields.${index}.settings.allowed_component_ids`]"
+                                                class="mt-1.5 text-sm text-red-600 dark:text-red-400">
+                                                {{ form.errors[`fields.${index}.settings.allowed_component_ids`] }}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -253,7 +263,8 @@ const submit = () => {
                                         <Input
                                             :model-value="Array.isArray(field.settings.options) ? field.settings.options.join(', ') : ''"
                                             @update:model-value="val => field.settings.options = (val as string).split(',').map(s => s.trim()).filter(s => s)"
-                                            placeholder="admin, user, guest" />
+                                            placeholder="admin, user, guest"
+                                            :error="form.errors[`fields.${index}.settings.options`]" />
                                     </div>
 
                                     <!-- Field Settings -->

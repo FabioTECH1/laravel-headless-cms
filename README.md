@@ -6,13 +6,15 @@ This project provides a robust backend for managing dynamic content schemas and 
 
 ## 🚀 Features
 
--   **Dynamic Schema Management**: Create and manage custom content types (schemas) directly from the admin panel.
--   **Content Management**: Full CRUD capabilities for any defined schema.
--   **Headless API**: flexible REST API for fetching and managing content from external applications.
--   **Modern Admin Panel**: Built with **Inertia.js 2**, **Vue 3**, and **Tailwind CSS 4** for a smooth, SPA-like experience.
--   **Rich Text Editor**: Integrated **Tiptap** editor for rich content creation.
--   **Authentication**: Secure authentication using **Laravel Sanctum**.
--   **Type Safety**: TypeScript support for frontend components.
+-   **Dynamic Content Modeling:** Create Custom Types and reusable **Components** (Dynamic Zones).
+-   **Content Management:** Full CRUD capabilities with flexible filtering, sorting, and pagination.
+-   **Headless API:** Robust REST API for consuming content from any frontend.
+-   **Media Library:** integrated asset management with support for drag-and-drop uploads.
+-   **Webhooks System:** Event-driven architecture with retries, logging, and HMAC security.
+-   **Role-Based Access Control (RBAC):** Granular permissions for Admins, Editors, and API Users.
+-   **Modern Admin Panel:** Built with **Inertia.js 2**, **Vue 3**, and **Tailwind CSS 4** (Dark Mode support included).
+-   **Rich Text Editor:** Integrated **Tiptap** editor for rich storytelling.
+-   **Authentication:** Secure authentication using **Laravel Sanctum**.
 
 ## 🛠 Tech Stack
 
@@ -72,13 +74,19 @@ This project provides a robust backend for managing dynamic content schemas and 
     Visit `http://localhost:8000/admin/register` to create your first admin account.
     *Note: This route is only available if no users exist in the system.*
 
-7.  **Optional: Seed Demo Content**
-    Populate the database with a full demo structure (Categories, Authors, Blog Posts) to verify functionality:
+7.  **Seed Database (Essential)**
+    Run the essential seeders (Roles & Permissions only) to get the system ready:
     ```bash
     php artisan db:seed
     ```
 
-8.  **Run Development Server**
+8.  **Seed Demo Content (Optional)**
+    Populate the database with a full demo structure (Categories, Authors, Blog Posts, Media) to verify functionality:
+    ```bash
+    php artisan db:seed --class=DemoSeeder
+    ```
+
+9.  **Run Development Server**
     Start the Laravel development server and Vite build process:
     ```bash
     composer run dev
@@ -101,9 +109,12 @@ On your first visit, go to `/admin/register` to create your administrator accoun
 ### Features:
 
 - **Dashboard**: Overview of system statistics and recent content.
-- **Schemas**: Define new content types (e.g., "Articles", "Products", "Categories").
-- **Content**: Create, edit, and manage entries for your defined schemas.
-- **Settings**: Manage API tokens, user profiles, and system configuration.
+- **Schema Builder**: Define Content Types (e.g., "Articles") and reusable **Components** (e.g., "SEO Metadata", "CTA Block").
+- **Content Manager**: Manage entries with support for Dynamic Zones (flexible page building).
+- **Media Library**: Manage images and files.
+- **Webhooks**: Configure event triggers (e.g., `content.created`) to notify external services.
+- **Roles & Permissions**: Manage user access and security.
+- **Settings**: System configuration.
 
 ### API Endpoints
 
@@ -111,14 +122,15 @@ The CMS exposes the following API endpoints (prefixed with `/api`):
 
 #### Public
 -   `POST /api/auth/login`: Login to get an API token.
--   `POST /api/auth/register`: Register a new user.
--   `GET /api/content/{slug}`: List content entries for a schema type.
--   `GET /api/content/{slug}/{id}`: Get a specific content entry.
+-   `GET /api/content/{slug}`: List content entries.
+-   `GET /api/content/{slug}/{id}`: Get specific content entry.
 
 #### Protected (Requires Bearer Token)
--   `POST /api/content/{slug}`: Create new content.
+-   `POST /api/content/{slug}`: Create content.
 -   `PUT /api/content/{slug}/{id}`: Update content.
 -   `DELETE /api/content/{slug}/{id}`: Delete content.
+-   `POST /api/media/upload`: Upload files.
+-   `GET /api/webhooks`: Manage webhooks.
 
 ## 🧪 Testing
 

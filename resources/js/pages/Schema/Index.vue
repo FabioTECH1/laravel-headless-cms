@@ -4,6 +4,9 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { route } from '@/route-helper';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
 import { ref, computed } from 'vue';
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 
 const props = defineProps<{
     types: Array<{
@@ -60,7 +63,7 @@ const deleteType = () => {
                     </div>
                     <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
                         <div class="flex gap-2">
-                            <Link
+                            <Link v-if="can('create-schema')"
                                 :href="route('admin.schema.create', { is_component: currentTab === 'components' ? 1 : 0 })"
                                 class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                                 Create {{ currentTab === 'components' ? 'Component' : 'Content Type' }}
@@ -82,65 +85,59 @@ const deleteType = () => {
                     </nav>
                 </div>
 
-                <div class="mt-8 flow-root">
-                    <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                        <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                            <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-                                <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
-                                    <thead class="bg-gray-50 dark:bg-gray-700">
-                                        <tr>
-                                            <th scope="col"
-                                                class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:pl-6">
-                                                Name</th>
-                                            <th scope="col"
-                                                class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200">
-                                                Slug
-                                            </th>
-                                            <th scope="col"
-                                                class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200">
-                                                Created At</th>
-                                            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                                                <span class="sr-only">Edit</span>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody
-                                        class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
-                                        <tr v-if="filteredTypes.length === 0">
-                                            <td colspan="4"
-                                                class="py-4 text-center text-sm text-gray-500 dark:text-gray-400">No
-                                                {{ currentTab === 'components' ? 'components' : 'content types' }}
-                                                found.</td>
-                                        </tr>
-                                        <tr v-for="type in filteredTypes" :key="type.id">
-                                            <td
-                                                class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-6">
-                                                {{ type.name }}</td>
-                                            <td
-                                                class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                                {{ type.slug
-                                                }}</td>
-                                            <td
-                                                class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                                {{ new
-                                                    Date(type.created_at).toLocaleDateString() }}</td>
-                                            <td
-                                                class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                <Link :href="route('admin.schema.edit', type.slug)"
-                                                    class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">
-                                                    Edit<span class="sr-only">, {{ type.name }}</span>
-                                                </Link>
-                                                <button @click="confirmDelete(type)"
-                                                    class="ml-4 text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
-                                                    Delete<span class="sr-only">, {{ type.name }}</span>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+                <div class="mt-8 bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700/50">
+                            <tr>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                    Name</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                    Slug
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                    Created At</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            <tr v-if="filteredTypes.length === 0">
+                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    No {{ currentTab === 'components' ? 'components' : 'content types' }} found.
+                                </td>
+                            </tr>
+                            <tr v-for="type in filteredTypes" :key="type.id">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ type.name }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ type.slug }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ new
+                                        Date(type.created_at).toLocaleDateString() }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex justify-end items-center gap-4">
+                                        <Link v-if="can('edit-schema')" :href="route('admin.schema.edit', type.slug)"
+                                            class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">
+                                            Edit<span class="sr-only">, {{ type.name }}</span>
+                                        </Link>
+                                        <button v-if="can('delete-schema')" @click="confirmDelete(type)"
+                                            class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
+                                            Delete<span class="sr-only">, {{ type.name }}</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

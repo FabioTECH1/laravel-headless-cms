@@ -17,8 +17,14 @@ defineProps<{
     tokens: Array<{
         id: number;
         name: string;
+        abilities: string[];
         last_used_at: string;
         created_at: string;
+    }>;
+    availableAbilities: Array<{
+        value: string;
+        label: string;
+        description: string;
     }>;
     systemInfo: {
         laravel_version: string;
@@ -75,6 +81,7 @@ const updatePassword = () => {
 // Token form
 const tokenForm = useForm({
     name: '',
+    abilities: [] as string[],
 });
 
 const createToken = () => {
@@ -232,6 +239,30 @@ const copyToken = () => {
                     <form @submit.prevent="createToken" class="space-y-4 mb-6">
                         <Input id="token-name" v-model="tokenForm.name" label="Token Name"
                             placeholder="e.g. My Next.js Blog" :error="tokenForm.errors.name" />
+
+                        <!-- Abilities Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Permissions
+                            </label>
+                            <div class="space-y-2">
+                                <label v-for="ability in availableAbilities" :key="ability.value"
+                                    class="flex items-start gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                                    <input type="checkbox" :value="ability.value" v-model="tokenForm.abilities"
+                                        class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                                    <div class="flex-1">
+                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ ability.label
+                                            }}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ ability.description }}
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            <p v-if="tokenForm.errors.abilities" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ tokenForm.errors.abilities }}
+                            </p>
+                        </div>
+
                         <div class="flex justify-end">
                             <button type="submit" :disabled="tokenForm.processing"
                                 class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors">
@@ -247,14 +278,20 @@ const copyToken = () => {
                     <div v-else class="space-y-3">
                         <div v-for="token in tokens" :key="token.id"
                             class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                            <div>
+                            <div class="flex-1">
                                 <p class="font-medium text-gray-900 dark:text-white">{{ token.name }}</p>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">
                                     Last used: {{ token.last_used_at }} • Created: {{ token.created_at }}
                                 </p>
+                                <div class="mt-2 flex flex-wrap gap-1">
+                                    <span v-for="ability in token.abilities" :key="ability"
+                                        class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
+                                        {{ ability === '*' ? 'Full Access' : ability }}
+                                    </span>
+                                </div>
                             </div>
                             <button @click="confirmRevocation(token.id)"
-                                class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium">
+                                class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium ml-4">
                                 Revoke
                             </button>
                         </div>
@@ -276,7 +313,7 @@ const copyToken = () => {
                         <div>
                             <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Laravel Version</p>
                             <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ systemInfo.laravel_version
-                            }}</p>
+                                }}</p>
                         </div>
                         <div>
                             <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Environment</p>

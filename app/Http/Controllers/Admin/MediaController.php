@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\MediaRequest;
 use App\Models\MediaFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -30,15 +31,8 @@ class MediaController extends Controller
         return response()->json($media);
     }
 
-    public function store(Request $request)
+    public function store(MediaRequest $request)
     {
-        $request->validate([
-            'file' => 'required|file|max:10240', // Max 10MB
-            'folder_id' => 'nullable|exists:media_folders,id',
-            'alt_text' => 'nullable|string|max:255',
-            'caption' => 'nullable|string',
-        ]);
-
         $file = $request->file('file');
 
         $path = $file->store('uploads', 'public');
@@ -78,15 +72,9 @@ class MediaController extends Controller
         ]);
     }
 
-    public function update(Request $request, string $id)
+    public function update(MediaRequest $request, string $id)
     {
         $media = MediaFile::findOrFail($id);
-
-        $request->validate([
-            'alt_text' => 'nullable|string|max:255',
-            'caption' => 'nullable|string',
-            'folder_id' => 'nullable|exists:media_folders,id',
-        ]);
 
         $media->update($request->only(['alt_text', 'caption', 'folder_id']));
 

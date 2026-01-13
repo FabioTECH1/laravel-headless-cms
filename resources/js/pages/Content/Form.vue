@@ -108,7 +108,7 @@ const submit = () => {
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg max-w-2xl mx-auto p-6">
                     <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">{{ isEditing ? 'Edit' : 'Create'
-                    }} {{ contentType.name }}</h2>
+                        }} {{ contentType.name }}</h2>
 
                     <form @submit.prevent="submit">
                         <!-- Locale Selector -->
@@ -121,11 +121,11 @@ const submit = () => {
                         <div v-for="field in contentType.fields" :key="field.name" class="mb-6">
                             <!-- Text Input -->
                             <Input v-if="field.type === 'text'" :id="field.name" v-model="form[field.name]"
-                                :label="field.name.replace(/_/g, ' ')" />
+                                :label="field.name.replace(/_/g, ' ')" :error="form.errors[field.name]" />
 
                             <!-- Integer Input -->
                             <Input v-if="field.type === 'integer'" :id="field.name" v-model="form[field.name]"
-                                type="number" :label="field.name.replace(/_/g, ' ')" />
+                                type="number" :label="field.name.replace(/_/g, ' ')" :error="form.errors[field.name]" />
 
                             <!-- Long Text (RichEditor) -->
                             <div v-if="field.type === 'longtext'">
@@ -135,28 +135,37 @@ const submit = () => {
                                 </label>
                                 <RichEditor :model-value="form[field.name]"
                                     @update:model-value="val => form[field.name] = val" />
+                                <p v-if="form.errors[field.name]" class="mt-1.5 text-sm text-red-600 dark:text-red-400">
+                                    {{ form.errors[field.name] }}</p>
                             </div>
 
                             <!-- Checkbox -->
-                            <div v-if="field.type === 'boolean'" class="flex items-center">
-                                <input :id="field.name" v-model="form[field.name]" type="checkbox"
-                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded" />
-                                <label :for="field.name"
-                                    class="ml-2 block text-sm text-gray-900 dark:text-gray-300 capitalize">
-                                    {{ field.name.replace(/_/g, ' ') }}
-                                </label>
+                            <div v-if="field.type === 'boolean'">
+                                <div class="flex items-center">
+                                    <input :id="field.name" v-model="form[field.name]" type="checkbox"
+                                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded" />
+                                    <label :for="field.name"
+                                        class="ml-2 block text-sm text-gray-900 dark:text-gray-300 capitalize">
+                                        {{ field.name.replace(/_/g, ' ') }}
+                                    </label>
+                                </div>
+                                <p v-if="form.errors[field.name]" class="mt-1.5 text-sm text-red-600 dark:text-red-400">
+                                    {{ form.errors[field.name]
+                                    }}</p>
                             </div>
 
                             <!-- Datetime -->
                             <Input v-if="field.type === 'datetime'" :id="field.name" v-model="form[field.name]"
-                                type="datetime-local" :label="field.name.replace(/_/g, ' ')" />
+                                type="datetime-local" :label="field.name.replace(/_/g, ' ')"
+                                :error="form.errors[field.name]" />
 
                             <!-- Relation (Belongs To & Many-to-Many) -->
                             <Select v-if="field.type === 'relation'" :id="field.name"
                                 v-model="form[field.settings?.multiple ? field.name : field.name + '_id']"
                                 :multiple="field.settings?.multiple" :label="field.name.replace(/_/g, ' ')"
                                 :placeholder="`Select ${field.name.replace(/_/g, ' ')}`"
-                                :options="(options?.[field.name] || []).map(opt => ({ value: opt.id, label: opt.label }))" />
+                                :options="(options?.[field.name] || []).map(opt => ({ value: opt.id, label: opt.label }))"
+                                :error="form.errors[field.settings?.multiple ? field.name : field.name + '_id']" />
 
                             <!-- Media Upload -->
                             <div v-if="field.type === 'media'">
@@ -165,6 +174,9 @@ const submit = () => {
                                     {{ field.name.replace(/_/g, ' ') }}
                                 </label>
                                 <MediaUpload v-model="form[field.name + '_id']" />
+                                <p v-if="form.errors[field.name + '_id']"
+                                    class="mt-1.5 text-sm text-red-600 dark:text-red-400">{{ form.errors[field.name +
+                                        '_id'] }}</p>
                             </div>
 
                             <!-- Component Field -->
@@ -177,6 +189,8 @@ const submit = () => {
                                     :model-value="form[field.name] || {}"
                                     @update:model-value="(val) => form[field.name] = val"
                                     :component-id="field.settings.related_content_type_id" :components="components" />
+                                <p v-if="form.errors[field.name]" class="mt-1.5 text-sm text-red-600 dark:text-red-400">
+                                    {{ form.errors[field.name] }}</p>
                             </div>
 
                             <!-- Dynamic Zone Field -->
@@ -188,11 +202,13 @@ const submit = () => {
                                 <DynamicZoneField v-if="components" :model-value="form[field.name] || []"
                                     @update:model-value="(val) => form[field.name] = val" :field="field"
                                     :components="components" />
+                                <p v-if="form.errors[field.name]" class="mt-1.5 text-sm text-red-600 dark:text-red-400">
+                                    {{ form.errors[field.name] }}</p>
                             </div>
 
                             <!-- Email Input -->
                             <Input v-if="field.type === 'email'" :id="field.name" v-model="form[field.name]"
-                                type="email" :label="field.name.replace(/_/g, ' ')" />
+                                type="email" :label="field.name.replace(/_/g, ' ')" :error="form.errors[field.name]" />
 
 
                             <!-- JSON Input (Textarea for now) -->
@@ -202,14 +218,18 @@ const submit = () => {
                                     {{ field.name.replace(/_/g, ' ') }} (JSON)
                                 </label>
                                 <textarea :id="field.name" v-model="form[field.name]" rows="5"
-                                    class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full font-mono text-sm"></textarea>
+                                    class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full font-mono text-sm"
+                                    :class="{ 'border-red-300 focus:border-red-500 focus:ring-red-500': form.errors[field.name] }"></textarea>
+                                <p v-if="form.errors[field.name]" class="mt-1.5 text-sm text-red-600 dark:text-red-400">
+                                    {{ form.errors[field.name] }}</p>
                             </div>
 
                             <!-- Enum Select -->
                             <Select v-if="field.type === 'enum'" :id="field.name" v-model="form[field.name]"
                                 :label="field.name.replace(/_/g, ' ')"
                                 :placeholder="`Select ${field.name.replace(/_/g, ' ')}`"
-                                :options="(field.settings?.options || []).map(opt => ({ value: opt, label: opt }))" />
+                                :options="(field.settings?.options || []).map(opt => ({ value: opt, label: opt }))"
+                                :error="form.errors[field.name]" />
                         </div>
 
                         <!-- Publishing Section Header -->

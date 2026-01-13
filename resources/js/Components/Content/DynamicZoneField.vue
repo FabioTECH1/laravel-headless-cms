@@ -105,7 +105,7 @@ const moveBlock = (index: number, direction: 'up' | 'down') => {
                 <h4 class="text-sm font-medium text-gray-900 dark:text-gray-200 mb-3">Select Component</h4>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <button v-for="comp in allowedComponents" :key="comp.id" type="button" @click="addBlock(comp)"
-                        class="px-3 py-2 text-sm text-left bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:border-indigo-200 transition-colors">
+                        class="px-3 py-2 text-sm text-left bg-white dark:bg-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:border-indigo-200 transition-colors">
                         {{ comp.name }}
                     </button>
                 </div>

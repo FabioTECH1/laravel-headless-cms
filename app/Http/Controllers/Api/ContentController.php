@@ -29,7 +29,7 @@ class ContentController extends Controller
         $query = $entity->newQuery();
 
         if (isset($validated['status']) && $validated['status'] === 'draft') {
-            // For now, allow viewing drafts if requested (in future, add permission check)
+            // Allow viewing drafts if requested
         } else {
             $query->published();
         }
@@ -39,7 +39,6 @@ class ContentController extends Controller
             $query->where('locale', $locale);
         }
 
-        // Apply QueryBuilder params (filters, sort, fields, populate)
         $query = $this->queryBuilder->apply($query, $validated);
 
         if ($contentType->is_single) {
@@ -68,7 +67,6 @@ class ContentController extends Controller
 
     public function store(ContentRequest $request, string $slug)
     {
-        // Need ContentType for other logic (ownership), but validation is done.
         $contentType = ContentType::where('slug', $slug)->with('fields')->firstOrFail();
 
         $attributes = $request->validated();
@@ -83,7 +81,6 @@ class ContentController extends Controller
             }
         }
 
-        // Handle status -> published_at mapping
         if (isset($attributes['status'])) {
             if ($attributes['status'] === 'published' && empty($attributes['published_at'])) {
                 $attributes['published_at'] = now();
@@ -93,7 +90,6 @@ class ContentController extends Controller
             unset($attributes['status']);
         }
 
-        // Auto-assign user_id if ownership is enabled
         if ($contentType->has_ownership) {
             $attributes['user_id'] = $request->user()->id;
         }
@@ -128,19 +124,11 @@ class ContentController extends Controller
         $query = $entity->newQuery();
 
         if ($contentType->is_localized) {
-            $locale = $request->query('locale', 'en');
-            // Enforce locale check?
-            // Strapi: findOne(id) returns entry.
-            // If we want to support ?locale=fr, we should filter by it if entry has locale.
-            // But ID is unique.
-            // Let's just allow reading by ID for now, ignoring locale filter, or verify it matches query.
-            // Verification:
             if ($request->has('locale')) {
                 $query->where('locale', $request->query('locale'));
             }
         }
 
-        // Apply QueryBuilder params (fields, populate only usually for show)
         // We pass $request->all() directly as show isn't using a FormRequest with validation rules yet
         $this->queryBuilder->apply($query, $request->all());
 
@@ -182,12 +170,9 @@ class ContentController extends Controller
         // Handle status -> published_at mapping
         if (isset($attributes['status'])) {
             if ($attributes['status'] === 'published') {
-                // Only set published_at if it wasn't already published, or if specifically requested?
-                // Usually "Publish" action sets it to now if null.
                 if (empty($attributes['published_at']) && is_null($item->published_at)) {
                     $attributes['published_at'] = now();
                 }
-                // If already published, do we keep original date? Yes, typically.
             } elseif ($attributes['status'] === 'draft') {
                 $attributes['published_at'] = null;
             }

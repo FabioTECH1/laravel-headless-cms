@@ -39,6 +39,9 @@ class RegisterController extends Controller
             'is_admin' => true,
         ]);
 
+        // Assign super-admin role to first user
+        $user->assignRole('super-admin');
+
         Auth::login($user);
 
         return redirect()->route('admin.dashboard');

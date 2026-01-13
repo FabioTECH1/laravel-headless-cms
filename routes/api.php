@@ -17,7 +17,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
     // Content write routes (require authentication)
-    Route::post('/content/{slug}', [ContentController::class, 'store']);
-    Route::put('/content/{slug}/{id}', [ContentController::class, 'update']);
-    Route::delete('/content/{slug}/{id}', [ContentController::class, 'destroy']);
+    Route::post('/content/{slug}', [ContentController::class, 'store'])->middleware('ability:content:write');
+    Route::put('/content/{slug}/{id}', [ContentController::class, 'update'])->middleware('ability:content:write');
+    Route::delete('/content/{slug}/{id}', [ContentController::class, 'destroy'])->middleware('ability:content:delete');
 });
